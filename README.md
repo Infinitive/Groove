@@ -1,4 +1,4 @@
-# Vinyl Collection Registry
+# Groove
 
 > **A private, local-first vinyl collection registry, listening journal, discovery engine, and collection intelligence system.**
 
