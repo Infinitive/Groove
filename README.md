@@ -1,1635 +1,360 @@
-# Groove
+<p align="center">
+  <img src="public/icon.svg" width="88" alt="Groove icon" />
+</p>
 
-> **A private, local-first vinyl collection registry, listening journal, discovery engine, and collection intelligence system.**
+<h1 align="center">GROOVE</h1>
+<p align="center"><b>A private, local-first record shop for one man's vinyl collection.</b></p>
 
-**Groove** is a mobile-first Progressive Web App (PWA) for cataloguing, exploring, and understanding a personal physical vinyl collection.
+<p align="center">
+  <img alt="status" src="https://img.shields.io/badge/status-MVP%20complete%2C%20active%20hardening-b45309?style=flat-square" />
+  <img alt="platform" src="https://img.shields.io/badge/platform-PWA%20%2F%20mobile--first-2D2D2A?style=flat-square" />
+  <img alt="storage" src="https://img.shields.io/badge/storage-local--first%20(IndexedDB)-2D2D2A?style=flat-square" />
+  <img alt="stack" src="https://img.shields.io/badge/stack-React%2019%20%2B%20TypeScript-2D2D2A?style=flat-square" />
+  <img alt="license" src="https://img.shields.io/badge/license-Apache--2.0-2D2D2A?style=flat-square" />
+</p>
 
-It combines:
+---
 
-* a complete collection registry
-* personal ratings and notes
-* listening history
-* discovery tools
-* collection analytics
-* listening intelligence
-* registry health
-* wishlist management
-* acquisition workflows
-* JSON backup and restore
-* CSV export
-* offline PWA functionality
+Every serious collection deserves a proper back room — somewhere to log what's been played, chase down a pressing detail, and figure out what's been gathering dust. **Groove** is that back room for a physical vinyl collection: a mobile-first Progressive Web App that catalogues the shelf, journals the listens, and tells you the truth about both.
 
-The application is deliberately designed to work **without an account, backend, cloud database, Discogs integration, Gemini integration, or permanent Internet connection**.
+The records stay on the shelf. Groove never streams or plays audio — it's the **registry, journal, and intelligence layer** that sits on top of the physical collection: what's owned, what's been spun, how it graded out, and what's worth pulling next.
 
-> **Your collection belongs to you. The application is designed to remain useful even when the Internet doesn't.**
+> **The collection belongs to the collector.** Not a cloud service, not a metadata provider, not an app vendor — the data lives in the browser, and it leaves only when you export it.
 
 ---
 
 ## Table of Contents
 
-* [What Is This?](#what-is-this)
-* [Why It Exists](#why-it-exists)
-* [Core Philosophy](#core-philosophy)
-* [Features](#features)
-* [Application Structure](#application-structure)
-* [Library](#library)
-* [Record Details](#record-details)
-* [Listening History](#listening-history)
-* [Discover](#discover)
-* [Analytics](#analytics)
-* [Registry Health](#registry-health)
-* [Wishlist](#wishlist)
-* [Acquisition](#acquisition)
-* [Artwork](#artwork)
-* [Data Architecture](#data-architecture)
-* [Data Ownership](#data-ownership)
-* [Backup & Restore](#backup--restore)
-* [CSV Export](#csv-export)
-* [Offline Architecture](#offline-architecture)
-* [Installing on iPhone](#installing-on-iphone)
-* [Using the App Offline](#using-the-app-offline)
-* [Moving the Collection to Another Device](#moving-the-collection-to-another-device)
-* [Privacy](#privacy)
-* [What This App Does Not Do](#what-this-app-does-not-do)
-* [Technology Stack](#technology-stack)
-* [Repository Structure](#repository-structure)
-* [Development](#development)
-* [Production Build](#production-build)
-* [Linting / Type Checking](#linting--type-checking)
-* [PWA Development](#pwa-development)
-* [Data Safety](#data-safety)
-* [Troubleshooting](#troubleshooting)
-* [Architecture Principles](#architecture-principles)
-* [Project Status](#project-status)
-* [License](#license)
+- [Why Groove Exists](#why-groove-exists)
+- [The Shop Floor](#the-shop-floor) — feature tour
+- [Discovery Modes](#discovery-modes)
+- [Registry Health](#registry-health)
+- [The Research Baseline](#the-research-baseline)
+- [Data Model](#data-model)
+- [Architecture](#architecture)
+- [Tech Stack](#tech-stack)
+- [Project Structure](#project-structure)
+- [Getting Started](#getting-started)
+- [Available Scripts](#available-scripts)
+- [Deployment & CI](#deployment--ci)
+- [Backup, Restore & Export](#backup-restore--export)
+- [Offline & Installing on iPhone](#offline--installing-on-iphone)
+- [Privacy](#privacy)
+- [Project Status](#project-status)
+- [Design Principles](#design-principles)
+- [License](#license)
 
 ---
 
-# What Is This?
+## Why Groove Exists
 
-Groove is a personal digital companion for a physical vinyl collection.
+A streaming service already knows what you own, what you've played, how often, and what it thinks you'll like next. A shelf of records doesn't know any of that — until something sits down and pays attention.
 
-It is not intended to replace a music player or become another cloud-based music platform.
+Groove is built to answer the questions a physical collection can't answer on its own:
 
-Instead, it provides a persistent local record of:
+- What do I actually own, and how complete is that record of it?
+- Which artists, genres, and decades dominate the shelf?
+- What have I never played? What have I played to death?
+- What's highly rated but neglected?
+- What should I put on next — with an actual reason, not a black-box recommendation?
 
-**what you own → what you listen to → how you feel about it → what you discover → what you want next**
-
-The application has four primary destinations:
-
-| Area          | Purpose                                          |
-| ------------- | ------------------------------------------------ |
-| **Library**   | Browse and manage the physical collection        |
-| **Discover**  | Decide what to listen to                         |
-| **Analytics** | Understand the collection and listening behavior |
-| **Wishlist**  | Track records you want to acquire                |
+It does this **without an account, a backend, a cloud database, a Discogs API dependency, or a generative-AI dependency.** Local-first isn't a fallback mode here — it's the whole design.
 
 ---
 
-# Why It Exists
+## The Shop Floor
 
-Physical collections create a problem that streaming services largely solve automatically.
+Groove is organized around four destinations, plus a detail view that does some real crate-digger-grade work.
 
-A streaming service already knows:
+### 📀 Library
+The authoritative shelf. Full-text search across artist, title, genre, style, edition, variant, label, and catalog number, with dynamic filters and sorting (artist, title, year, date added, rating, play count, last played). Grid or compact view. Only **Artist + Title** are required to register a record — everything else is optional and can be filled in later.
 
-* what albums exist
-* what metadata they have
-* what artwork belongs to them
-* what you've played
-* how frequently you've played it
-* what you might like next
+### 🎧 Listening Journal
+Every spin gets logged as its own record — timestamp, optional session rating, listening context (speakers, headphones, living room, whatever), and notes. Play counts and "last played" are never manually maintained; they're **derived live from the log**, so deleting a session updates every downstream stat automatically. A record's overall rating and a single session's rating are kept deliberately separate — a great night with an average record doesn't rewrite its reputation, and vice versa.
 
-A physical collection does not.
+### 🧭 Discover
+Built to kill choice paralysis, not to be a recommendation engine. Six live modes pull from your actual shelf and listening state — see [Discovery Modes](#discovery-modes) below. It's useful on day one with zero listening history, and gets sharper as real sessions accumulate.
 
-Groove is designed to provide that organizational and analytical layer while keeping the underlying data under the collector's control.
+### 📊 Collection Intelligence (Analytics)
+Split deliberately into two halves that never get confused with each other:
 
-It can answer questions such as:
+| | Answers | Examples |
+|---|---|---|
+| **Collection Intelligence** | *What do I own?* | Size, artist/genre/style diversity, decade spread, rating distribution, growth over time |
+| **Listening History** | *What do I actually do with it?* | Engagement rate, rotation, most/least played, neglected favorites, weekday & time-of-day patterns |
 
-* What do I actually own?
-* Which artists are represented?
-* Which genres and styles dominate the collection?
-* Which decades are represented?
-* What records have I never played?
-* What have I been playing repeatedly?
-* What haven't I played recently?
-* Which highly rated records are being neglected?
-* What have I added recently?
-* How complete is my catalogue metadata?
-* What do I want to buy next?
-* How has my listening behavior changed over time?
+Listening analytics support **All Time / 30 Days / 90 Days / This Year** windows; collection composition stays independent of whichever window is selected.
+
+### ⭐ Wishlist & Acquisition
+A wishlist entry (artist, title, desired edition, target price, priority, notes) lives entirely separately from the owned collection — it doesn't count toward any collection stat until it's acquired. The acquisition flow carries that context forward into a new, fully-fledged collection record with its own identity and timestamps, then retires the wishlist entry so nothing double-counts.
+
+### 🖼️ Artwork, without the internet
+No cover image on file? Groove generates a deterministic sleeve locally — artist/title-derived hashing into a curated earthy palette, rendered as CSS gradients and local SVG groove work. Every record gets a stable visual identity, and artwork never depends on a network call.
 
 ---
 
-# Core Philosophy
+## Discovery Modes
 
-## Local-first
+| Mode | What it pulls |
+|---|---|
+| **Choose for Me** | One considered pick, with a real reason attached |
+| **Blind Pull** | A small random handful off the shelf |
+| **Unplayed** | Records with zero logged listens |
+| **Fresh Additions** | Recently registered records |
+| **Genre / Style** | Filtered to a chosen sound |
+| **Era / Decade** | Filtered to a chosen release period |
 
-The browser's IndexedDB database is the authoritative source of application data.
-
-There is no remote database.
-
-## Offline-capable
-
-Core application functionality does not depend on an Internet connection.
-
-The application shell is delivered as a PWA and cached through its service worker.
-
-## User-owned data
-
-The collection is stored locally and can be exported as structured JSON or interoperable CSV.
-
-## No account required
-
-There is no login or authentication system.
-
-## No cloud dependency
-
-There is no Supabase, Firebase, PostgreSQL, hosted database, REST backend, or GraphQL backend.
-
-## Honest metadata
-
-Unknown information remains unknown.
-
-The application does not fabricate release information, editions, variants, artwork, or listening history.
-
-## Derived data stays derived
-
-Play counts, last-played dates, rankings, and analytics are calculated from canonical local data rather than maintained as duplicated counters.
-
-## Personal rather than enterprise
-
-This is a personal media registry, not warehouse-management software.
-
-The experience prioritizes:
-
-* browsing
-* discovery
-* listening
-* reflection
-* personal ratings
-* collection intelligence
-
-over administrative complexity.
+All six run entirely against local data — there's no external recommendation service to call out to, blind or otherwise.
 
 ---
 
-# Features
+## Registry Health
 
-## Collection Library
+Registry Health scores **metadata completeness**, not musical quality — it's a measure of how thoroughly the registry describes what's on the shelf, not a verdict on any record itself. Fields are weighted by how much they matter to browsing and identification:
 
-* Complete vinyl catalogue
-* Multi-field search
-* Search by artist
-* Search by title
-* Search by genre
-* Search by style
-* Search by edition
-* Search by variant
-* Search by label
-* Search by catalog number
-* Search by release year
-* Sorting
-* Filtering
-* Dynamic filter counts
-* Grid and compact library presentation
-* Personal ratings
-* Collection metadata
-* Registration dates
+| Field | Weight |
+|---|---:|
+| Artist | 2 |
+| Album Title | 2 |
+| Release Year | 1.5 |
+| Genres | 1.5 |
+| Format | 1 |
+| Record Label | 1 |
+| Edition Details | 1 |
+| Colorway / Variant | 1 |
+| Catalog # | 0.5 |
 
-## Record Management
-
-* Add records
-* Edit records
-* Delete records
-* Detailed record view
-* Optional pressing information
-* Optional edition information
-* Optional packaging information
-* Purchase information
-* Personal notes
-* Registry identifiers
-
-Only **Artist + Title** are required to create a record. Everything else is optional.
-
-## Listening Journal
-
-* Log a listening session
-* Automatic timestamp
-* Optional session rating
-* Optional listening context
-* Optional listening notes
-* Full listening history
-* Delete individual listening sessions
-* Dynamic play counts
-* Dynamic last-played information
-
-## Discovery
-
-Six discovery modes:
-
-1. **Choose for Me**
-2. **Blind Pull**
-3. **Unplayed**
-4. **Fresh Additions**
-5. **Genre / Style**
-6. **Era / Decade**
-
-Discovery begins with useful behavior even when there is no listening history and becomes more history-aware as real listening data accumulates.
-
-## Analytics
-
-### Collection Intelligence
-
-* Total records
-* Unique artists
-* Genres
-* Styles
-* Release decades
-* Release-year span
-* Rating distribution
-* Average personal rating
-* Unrated records
-* Collection growth
-
-### Listening Intelligence
-
-* Engagement rate
-* Played vs. never played
-* Total listening sessions
-* Average listens per played record
-* Average listens per collection record
-* Most played
-* Least played
-* Recently spun
-* Never played
-* Artist rotation
-* Genre rotation
-* Weekday patterns
-* Time-of-day patterns
-* Neglected records
-* Highly rated underplayed records
-* Frequently played favorites
-* Recent rotation
-
-### Time Ranges
-
-Listening analytics support:
-
-* All Time
-* Past 30 Days
-* Past 90 Days
-* This Year
-
-Collection composition remains independent of listening-history filters.
+The result surfaces as a single completeness score plus a ranked list of the most commonly missing fields, so cleanup has an actual priority order instead of being guesswork.
 
 ---
 
-# Application Structure
+## The Research Baseline
 
-The application's primary architecture is:
+This is Groove's deepest cut: the seed catalogue ships pre-loaded with real records from the collection, cross-referenced against a hand-researched pressing database (`src/data/researchMaster.ts`) covering physical-release detail most collection apps don't bother with — matrix/runout etchings, pressing plant, pressing country and year, vinyl weight, and catalog/barcode identifiers, each carrying its own **research status and confidence level** (`identified`, `likely`, `unresolved discrepancy`, etc.).
 
-```text
-                    VINYL COLLECTION REGISTRY
-                              │
-             ┌────────────────┼────────────────┐
-             │                │                │
-          LIBRARY          DISCOVER         WISHLIST
-             │                │                │
-             └────────────────┼────────────────┘
-                              │
-                         ANALYTICS
-                              │
-                    ┌─────────┴─────────┐
-                    │                   │
-             Collection Data       Listen Logs
-                    │                   │
-                    └─────────┬─────────┘
-                              │
-                         IndexedDB
-                              │
-                     Local Application
-                              │
-                         PWA Shell
-```
-
-The fundamental data flow is:
-
-```text
-User
- ↓
-Application
- ↓
-IndexedDB
- ↓
-Derived engines
- ↓
-UI
-```
-
-There is intentionally no:
-
-```text
-Application
- ↓
-Cloud API
- ↓
-Remote database
-```
-
-in the core architecture.
+That confidence rating matters: a record detail view distinguishes a fact the collector confirmed by hand from one that's still an open question, and surfaces unresolved conflicts directly rather than quietly picking one and moving on. Nothing here calls out to Discogs or any other external service — it's a local, versioned research baseline the collector controls.
 
 ---
 
-# Library
+## Data Model
 
-The Library is the authoritative representation of the physical collection.
+Three entities, related by ID, with derived stats computed on the fly rather than cached as stale counters:
 
-## Search
-
-Search operates across multiple relevant metadata fields.
-
-Supported search information includes:
-
-* Artist
-* Title
-* Genre
-* Style
-* Edition
-* Variant
-* Label
-* Catalog Number
-* Release Year
-
-## Sorting
-
-Records can be sorted by:
-
-* Artist
-* Title
-* Release Year
-* Date Added
-* Personal Rating
-* Play Count
-* Last Played
-
-## Filtering
-
-The Library supports dynamic filtering for relevant collection attributes, including:
-
-* status
-* special editions
-* rating
-* format
-* genre
-* release decade
-
-Filter options are generated from actual collection data rather than being permanently hardcoded.
-
----
-
-# Record Details
-
-Record details are organized into several conceptual areas.
-
-## Overview
-
-The core identity and visual presentation of the record.
-
-## Edition & Record Details
-
-Optional physical and release information such as:
-
-* Edition
-* Variant
-* Format
-* Disc count
-* RPM
-* Label
-* Country
-* Catalog number
-* Packaging extras
-* Discogs ID
-
-## Personal
-
-Personal information such as:
-
-* Personal rating
-* Notes
-* Purchase price
-* Purchase date
-
-## Listening History
-
-A record's listening history includes:
-
-* Total sessions
-* Last listened
-* Individual sessions
-* Session ratings
-* Context
-* Notes
-* Exact timestamps
-
-## Registry Metadata
-
-Technical registry information such as:
-
-* Stable record ID
-* Added timestamp
-* Updated timestamp
-
----
-
-# Listening History
-
-Listening sessions are stored independently from the record itself.
-
-A listening log contains:
-
-```text
-id
-recordId
-listenedAt
-rating
-note
-context
-```
-
-This is intentional.
-
-The application does **not** store a manually incremented `playCount` on the record as the source of truth.
-
-Instead:
+| Entity | Role |
+|---|---|
+| **Album** | Canonical record — identity, edition/pressing detail, personal rating, research provenance |
+| **ListenLog** | One logged listening session — timestamp, session rating, context, notes |
+| **WishlistItem** | A desired-but-unowned record, promoted to an Album on acquisition |
 
 ```text
 Listen Logs
     ↓
 Derived Metrics
     ↓
-Play Count
-Last Played
-Rotation
-Rankings
-Analytics
+Play Count · Last Played · Rotation · Rankings · Analytics
 ```
 
-This prevents stale statistics.
-
-If a listening session is deleted, all dependent metrics update automatically.
+Nothing here is a manually incremented counter. If a session gets deleted, everything downstream — play count, last-played date, every affected chart — recalculates from the log itself.
 
 ---
 
-# Catalogue Rating vs. Session Rating
-
-These are deliberately different concepts.
-
-## Personal Rating
-
-The record-level rating represents your overall opinion of the record.
-
-Range:
+## Architecture
 
 ```text
-0.5 – 5.0
+Raw records (IndexedDB)
+        │
+        ▼
+  Domain engine   ← analyticsEngine, discoveryEngine
+        │
+        ▼
+Normalized result
+        │
+        ▼
+   UI component   ← renders only, never recalculates
 ```
 
-in half-star increments.
+`src/engines/` holds the analytics and discovery logic as plain, framework-agnostic TypeScript — no React, no DOM — which is also what makes it directly testable with `fake-indexeddb` in isolation from the UI. The registry's honesty principle runs all the way through the stack: unknown metadata stays unknown, nothing is fabricated to fill a gap, and derived numbers are always recalculated from source rather than trusted as stored state.
 
-## Session Rating
-
-A listening-session rating describes that particular listening experience.
-
-A great listening session does not necessarily mean the record's overall rating should change.
-
-Likewise, an excellent record can have an ordinary listening session.
+There is intentionally no cloud tier anywhere in this diagram — no API layer, no remote database, no sync daemon. `IndexedDB` is the entire source of truth.
 
 ---
 
-# Discover
+## Tech Stack
 
-Discover exists primarily to reduce choice paralysis.
+| Layer | Choice |
+|---|---|
+| UI | React 19 + TypeScript |
+| Styling | Tailwind CSS 4 (via `@tailwindcss/vite`) — warm "natural tones" palette, `Newsreader` serif headings + `Plus Jakarta Sans` body |
+| Motion | `motion` (Framer Motion successor) |
+| Icons | `lucide-react` |
+| Storage | Native browser `IndexedDB` (`vinyl_collection_db`) — no ORM layer, no remote database |
+| Build | Vite 6 |
+| PWA | `vite-plugin-pwa`, auto-updating service worker, precached shell + cache-first Google Fonts |
+| Testing | `fake-indexeddb` for storage-layer tests, `tsc --noEmit` for type-safety (`npm run lint`) |
+| Package manager | Bun (CI-driven) — npm/pnpm/yarn all work locally against the same `package.json` |
 
-It is not intended to be an AI recommendation system.
-
-## Choose for Me
-
-Uses actual local collection metadata and listening state to select a record and provide factual context for the choice.
-
-## Blind Pull
-
-Provides a small random selection from the collection.
-
-## Unplayed
-
-Surfaces records with zero listening sessions.
-
-## Fresh Additions
-
-Surfaces recently registered records.
-
-## Genre / Style
-
-Filters discovery to represented genre/style metadata.
-
-## Era / Decade
-
-Filters discovery by release period.
-
-## Choose Again
-
-Allows another local selection without requiring an external service.
+No generative-AI dependency, no Discogs API client, no analytics/telemetry SDK — none of that is in the dependency tree at all.
 
 ---
 
-# Cold-Start Behavior
-
-The application does not require a history of listening sessions to be useful.
-
-With zero listening history:
-
-* collection analytics still work
-* discovery still works
-* unplayed records are meaningful
-* collection metadata remains available
-* listening analytics show honest empty states
-* no fake listening data is generated
-
-As actual listening sessions accumulate, history-aware discovery and analytics become increasingly useful.
-
----
-
-# Analytics
-
-Analytics are intentionally divided into two categories.
-
-## Collection Intelligence
-
-This describes **what the collection is**.
-
-Examples:
-
-* size
-* artist diversity
-* genre/style distribution
-* decade representation
-* release-year range
-* ratings
-* metadata completeness
-
-## Listening Intelligence
-
-This describes **how the collection is actually being used**.
-
-Examples:
-
-* engagement
-* listening frequency
-* rotation
-* most-played records
-* recently played records
-* neglected records
-* temporal patterns
-* favorite/underplayed relationships
-
-This distinction prevents collection composition from being confused with listening behavior.
-
----
-
-# Registry Health
-
-Registry Health measures metadata completeness.
-
-It is not a quality score for the music.
-
-It is a measure of how completely the registry describes the physical collection.
-
-Weighted fields include:
-
-| Field          | Weight |
-| -------------- | -----: |
-| Artist         |      2 |
-| Title          |      2 |
-| Release Year   |    1.5 |
-| Genre          |    1.5 |
-| Format         |      1 |
-| Label          |      1 |
-| Edition        |      1 |
-| Variant        |      1 |
-| Catalog Number |    0.5 |
-
-The resulting metric is presented as a:
-
-**Catalog Health Score — metadata fidelity**
-
----
-
-# Wishlist
-
-The Wishlist is intentionally separate from owned collection data.
-
-Wishlist items can contain:
-
-* Artist
-* Title
-* Desired Edition
-* Target Price
-* Priority
-* Notes
-* Discogs ID
-* Added timestamp
-* Updated timestamp
-
-Priority levels:
-
-* High
-* Medium
-* Low
-
-Wishlist records do not count toward the owned collection until acquired.
-
----
-
-# Acquisition
-
-The acquisition workflow allows a wishlist item to become a collection record.
-
-Relevant information can be carried forward, including:
-
-* Artist
-* Title
-* Desired edition
-* Target price
-* Notes
-
-The acquisition process can then add collection-specific information such as:
-
-* Format
-* Release year
-* Label
-* Edition
-* Variant
-* Purchase price
-* Purchase date
-
-The resulting collection record receives its own stable identity and registry timestamps.
-
-The wishlist item is removed after acquisition to avoid duplicate state.
-
----
-
-# Artwork
-
-Album artwork intentionally does **not** depend on an external metadata service.
-
-When a record has no supplied `coverImage`, the application generates a deterministic vinyl sleeve locally.
-
-The artwork system uses:
-
-* artist/title-derived hashing
-* curated earthy palettes
-* CSS gradients
-* local SVG elements
-* vinyl-groove visuals
-* local vector icons
-
-This provides every record with a stable visual identity while maintaining offline operation.
-
-## Why There Is No Discogs Artwork
-
-Discogs integration was deliberately excluded from the MVP.
-
-The application may store an optional:
+## Project Structure
 
 ```text
-discogsId
-```
-
-but this is only a passive reference.
-
-It does not:
-
-* contact Discogs
-* retrieve metadata
-* download artwork
-* retrieve market values
-* require an API key
-* require Internet access
-
-This is an intentional architectural decision.
-
----
-
-# Data Architecture
-
-The authoritative runtime database is:
-
-```text
-vinyl_collection_db
-```
-
-The primary object stores are:
-
-```text
-albums
-listenLogs
-wishlist
-metadata
-```
-
-## Album
-
-The current record model supports fields including:
-
-```text
-id
-artist
-title
-releaseYear
-genres
-styles
-label
-country
-format
-edition
-variant
-packagingExtras
-discCount
-rpm
-catalogNumber
-discogsId
-coverImage
-purchasePrice
-purchaseDate
-personalRating
-notes
-addedAt
-updatedAt
-```
-
-Most metadata is optional.
-
-The minimum meaningful record identity is:
-
-```text
-Artist + Title
-```
-
----
-
-# Data Ownership
-
-The application's data ownership model is deliberately simple:
-
-```text
-IndexedDB = Canonical Source of Truth
-```
-
-Play counts, last-played dates, rankings, and analytics are derived from the canonical records and listening logs.
-
-There is no remote master copy.
-
-There is no synchronization daemon.
-
-There is no cloud database.
-
----
-
-# Backup & Restore
-
-JSON is the application's canonical full-fidelity backup format.
-
-A backup contains:
-
-* schema version
-* export timestamp
-* application version
-* albums
-* listening logs
-* wishlist
-* application settings where applicable
-
-## Replace All
-
-Replaces the local dataset with the validated backup.
-
-## Merge
-
-Merges validated backup data with the existing local dataset.
-
-## Import Validation
-
-Before modifying the local database, imported data is validated for:
-
-* structure
-* schema version
-* required identifiers
-* field types
-* rating ranges
-* listening-log references
-* referential integrity
-
-Invalid imports should be rejected without partially mutating the database.
-
----
-
-# CSV Export
-
-CSV is provided for interoperability.
-
-It is **not** the canonical application data format.
-
-Records can be exported with information including:
-
-* ID
-* Artist
-* Title
-* Release Year
-* Genre
-* Style
-* Format
-* Edition
-* Variant
-* Label
-* Country
-* Catalog Number
-* Discogs ID
-* Personal Rating
-* Play Count
-* Last Played
-* Purchase Price
-* Purchase Date
-* Notes
-* Added Date
-
-Listening history and Wishlist data can also be exported.
-
-Multi-value fields use semicolon-separated values.
-
-JSON should be used when the goal is complete application-state recovery.
-
-CSV should be used when the goal is interoperability with spreadsheets or other tools.
-
----
-
-# Offline Architecture
-
-The application is a Progressive Web App.
-
-The PWA configuration uses `vite-plugin-pwa` with an automatically updating service worker and precaching for core application resources.
-
-The production PWA caches application resources including:
-
-* JavaScript
-* CSS
-* HTML
-* icons
-* PNG assets
-* SVG assets
-* font resources
-
-The application also defines cache-first handling for Google Fonts resources.
-
-The application shell and user database have separate responsibilities:
-
-```text
-Service Worker
-       ↓
-Application Resources
-
-IndexedDB
-       ↓
-User Data
-```
-
-The service worker is not the collection database.
-
-IndexedDB is.
-
----
-
-# Installing on iPhone
-
-## Recommended Method: Safari
-
-The intended iPhone installation method is through **Safari**.
-
-Apple supports adding a website to the iPhone Home Screen and opening it as a web app.
-
-### 1. Open the deployed Registry
-
-On your iPhone, open **Safari** and navigate to the deployed Groove URL:
-
-```text
-https://infinitive.github.io/Groove/
-```
-
-### 2. Open Safari's Share menu
-
-Tap Safari's **Share** button.
-
-### 3. Choose "Add to Home Screen"
-
-Scroll through the Share Sheet and select:
-
-**Add to Home Screen**
-
-If the option isn't visible:
-
-1. Scroll to the bottom of the Share Sheet.
-2. Tap **Edit Actions**.
-3. Add **Add to Home Screen**.
-4. Return to the Share Sheet.
-
-### 4. Enable Web App mode
-
-On the Add to Home Screen screen, enable:
-
-**Open as Web App**
-
-Then tap:
-
-**Add**
-
-### 5. Launch Groove
-
-The application should now appear on your iPhone Home Screen.
-
-Launch it from the Home Screen icon.
-
-This provides the intended app-like PWA experience.
-
----
-
-# iPhone Installation Best Practice
-
-Install the application while connected to the Internet and allow the application to load completely before installing it.
-
-Then:
-
-1. Launch it from the Home Screen.
-2. Browse Library.
-3. Open a record.
-4. Open Discover.
-5. Open Analytics.
-6. Open Wishlist.
-7. Verify your data.
-8. Test offline behavior.
-
-This gives the browser an opportunity to establish its application cache before the first offline session.
-
----
-
-# Using the App Offline
-
-The core application is designed to remain functional without Internet access.
-
-Offline-capable functionality includes:
-
-* Library
-* Search
-* Filtering
-* Sorting
-* Record details
-* Add/edit/delete
-* Listening logs
-* Listening history
-* Discover
-* Analytics
-* Registry Health
-* Wishlist
-* Acquisition
-* JSON export
-* JSON import
-* CSV export
-* Local artwork
-
-The core application does not need to contact:
-
-* Discogs
-* Gemini
-* a cloud database
-* an authentication server
-* a remote analytics service
-
-to perform these operations.
-
----
-
-# Moving the Collection to Another Device
-
-Because the application is local-first, devices do **not** automatically synchronize.
-
-For example:
-
-```text
-iPhone
-   │
-   │ Export JSON
-   ▼
-Backup File
-   │
-   │ Transfer
-   ▼
-New Device
-   │
-   │ Import JSON
-   ▼
-Local IndexedDB
-```
-
-This is intentional.
-
-The application does not maintain a cloud copy of the collection.
-
----
-
-# Privacy
-
-Groove is designed around local data ownership.
-
-The finished application does not require:
-
-* accounts
-* authentication
-* cloud storage
-* remote collection databases
-* remote listening-history storage
-* telemetry
-* Gemini runtime access
-* Discogs runtime access
-
-Your collection, ratings, notes, listening history, and wishlist are intended to remain local to the device.
-
-The application can therefore function without transmitting collection data to a central service.
-
----
-
-# What This App Does Not Do
-
-Several exclusions are intentional.
-
-## No Discogs Integration
-
-There is no live Discogs API.
-
-`discogsId` is passive metadata only.
-
-## No Gemini
-
-The application does not use Gemini or generative AI at runtime.
-
-AI-assisted development of the source code does not make the finished application dependent on AI.
-
-## No Cloud Database
-
-There is no:
-
-* Supabase
-* Firebase
-* PostgreSQL
-* hosted database
-* REST backend
-* GraphQL backend
-
-## No Authentication
-
-There is no account system.
-
-## No Remote Analytics
-
-Listening behavior is not sent to an analytics platform.
-
-## No Barcode / Camera Scanning
-
-Barcode scanning and camera-based record identification are outside the MVP.
-
-## No Condition Grading
-
-The application does not attempt to formalize media or sleeve condition.
-
-## No Shelf Mapping
-
-The application does not require mapping records to physical shelves or storage locations.
-
-## No Persistent Now Playing System
-
-This is a collection registry and listening journal, not a music player.
-
-## No Live Market Valuation
-
-Purchase price can be recorded.
-
-Real-time market valuation is intentionally outside the MVP.
-
----
-
-# Technology Stack
-
-The project currently uses:
-
-* **React 19**
-* **TypeScript**
-* **Vite**
-* **Tailwind CSS**
-* **Lucide React**
-* **Motion**
-* **IndexedDB**
-* **vite-plugin-pwa**
-* **Workbox through vite-plugin-pwa**
-
-The application has no backend, server, or cloud dependencies. Inherited AI Studio scaffolding packages (`@google/genai`, Express, dotenv) have been removed from the repository.
-
-The application itself does not use Gemini or a server backend.
-
----
-
-# Repository Structure
-
-The repository currently contains the primary application source under `src/`, with supporting public assets, scripts, configuration, and package metadata.
-
-The application is organized conceptually around:
-
-```text
-src/
-├── components/
-│   ├── VinylArtwork.tsx
-│   ├── RecordDetailModal.tsx
-│   ├── AddEditRecordModal.tsx
-│   ├── LogListenModal.tsx
-│   └── ...
+Groove/
+├── public/
+│   ├── icon.svg                 # App icon (vinyl disc mark)
+│   ├── pwa-192x192.png / pwa-512x512.png / pwa-maskable-512x512.png
+│   └── apple-touch-icon.png
 │
-├── engines/
-│   ├── analyticsEngine.ts
-│   ├── discoveryEngine.ts
-│   └── ...
+├── src/
+│   ├── components/
+│   │   ├── AddEditRecordModal.tsx   # Full record editor, incl. research fields
+│   │   ├── RecordDetailModal.tsx    # Record detail + research baseline banner
+│   │   ├── LogListenModal.tsx       # Session logging
+│   │   ├── VinylArtwork.tsx         # Deterministic local sleeve generation
+│   │   ├── SettingsModal.tsx        # Backup / restore / CSV export
+│   │   └── ...                      # Header, Navigation, RatingStars, etc.
+│   │
+│   ├── views/
+│   │   ├── LibraryView.tsx
+│   │   ├── DiscoverView.tsx
+│   │   ├── AnalyticsView.tsx        # Collection Intelligence + Registry Health
+│   │   └── WishlistView.tsx
+│   │
+│   ├── engines/
+│   │   ├── analyticsEngine.ts       # Collection + listening intelligence
+│   │   └── discoveryEngine.ts       # Discovery mode logic
+│   │
+│   ├── services/
+│   │   └── db.ts                    # IndexedDB schema + access layer
+│   │
+│   ├── hooks/
+│   │   ├── useVinylData.ts          # App-level data + import/export API
+│   │   └── usePWAInstall.ts
+│   │
+│   ├── data/
+│   │   ├── seedCatalogue.ts         # Pre-loaded real collection records
+│   │   └── researchMaster.ts        # Hand-researched pressing database
+│   │
+│   └── types.ts                     # Album, ListenLog, WishlistItem, BackupData
 │
-├── services/
-│   └── db.ts
-│
-├── hooks/
-│   └── useVinylData.ts
-│
-├── views/
-│   ├── LibraryView.tsx
-│   ├── DiscoverView.tsx
-│   ├── AnalyticsView.tsx
-│   ├── WishlistView.tsx
-│   └── ...
-│
-├── data/
-│   └── seedCatalogue.ts
-│
-└── types.ts
-```
-
-The repository also contains:
-
-```text
-public/
-scripts/
-.gitignore
-bun.lock
-index.html
-metadata.json
-package.json
-tsconfig.json
-vite.config.ts
+└── .github/
+    ├── workflows/ci.yml             # Type-check + build on push/PR
+    ├── workflows/deploy.yml         # Build + deploy to GitHub Pages
+    ├── workflows/codeql.yml         # Weekly + on-push security scanning
+    └── dependabot.yml               # Weekly dependency updates
 ```
 
 ---
 
-# Development
+## Getting Started
 
-## Requirements
-
-A current Bun or Node.js environment is sufficient for the repository's standard development scripts.
-
-Clone the repository:
+**Requirements:** [Bun](https://bun.sh) (matches CI) — npm works too if you'd rather.
 
 ```bash
 git clone https://github.com/Infinitive/Groove.git
-```
-
-Enter the repository:
-
-```bash
 cd Groove
+bun install        # or: npm install
+bun run dev         # or: npm run dev
 ```
 
-Install dependencies:
-
-```bash
-bun install --frozen-lockfile
-```
-
-Start the development server:
-
-```bash
-bun run dev
-```
-
-The repository's Vite development script runs on port `3000` and listens on `0.0.0.0`.
+The dev server runs at `http://localhost:3000`. There's no backend to stand up — on first load, Groove seeds its own local IndexedDB store from the built-in catalogue.
 
 ---
 
-# Production Build
+## Available Scripts
 
-Create a production build:
-
-```bash
-bun run build
-```
-
-Preview the production build:
-
-```bash
-bun run preview
-```
-
-The production build is the appropriate environment for evaluating final PWA behavior.
+| Command | What it does |
+|---|---|
+| `dev` | Start the Vite dev server (port 3000) |
+| `build` | Production build → `dist/` |
+| `preview` | Serve the production build locally |
+| `lint` | Type-check the whole project (`tsc --noEmit`) |
+| `clean` | Remove build output |
 
 ---
 
-# Linting / Type Checking
+## Deployment & CI
 
-The repository currently defines:
+Groove ships as a static PWA, deployed automatically to GitHub Pages on every push to `main` (`.github/workflows/deploy.yml`), and gated by a separate CI job that type-checks and builds on every push and pull request (`.github/workflows/ci.yml`). A weekly CodeQL scan and Dependabot keep the dependency surface and code scanning current.
 
-```bash
-bun run lint
-```
+Live at: **https://infinitive.github.io/Groove/**
 
-The current `lint` script performs TypeScript checking with:
-
-```text
-tsc --noEmit
-```
-
-This means it validates the TypeScript project without producing compiled JavaScript output.
+To self-host, run `bun run build` (or `npm run build`) and serve `dist/` from any static host.
 
 ---
 
-# PWA Development
+## Backup, Restore & Export
 
-PWA behavior is configured through `vite-plugin-pwa`.
+**JSON is the canonical, full-fidelity backup format** — schema version, export timestamp, app version, every album, every listening log, and the wishlist, all in one file. Imports are validated (structure, schema version, required IDs, field types, rating ranges, referential integrity) *before* anything touches the live database, with a choice of replacing the local dataset outright or merging into it.
 
-The current configuration:
+**CSV export** exists purely for interoperability with spreadsheets — it is explicitly not the format to trust for a full restore. Listening history and the wishlist export separately.
 
-* generates the PWA manifest
-* registers an automatically updating service worker
-* precaches core application assets
-* includes PWA icons
-* configures standalone display
-* supports cached font resources
-* provides development PWA support
-
-The application manifest identifies the application as:
-
-**Groove**
-
-with the short name:
-
-**Groove**.
-
-The HTML document also declares Apple mobile-web-app metadata and an Apple touch icon.
+There's no cloud sync between devices. Moving a collection to a new device means exporting JSON on one and importing it on the other.
 
 ---
 
-# External Network Behavior
+## Offline & Installing on iPhone
 
-The application intentionally has essentially no runtime API architecture.
+The app shell is precached by an auto-updating service worker (`vite-plugin-pwa`); the data layer is IndexedDB. The two are independent — the service worker owns application resources, IndexedDB owns your collection — so offline behavior never depends on network state once installed.
 
-The current HTML references Google Fonts:
-
-* `fonts.googleapis.com`
-* `fonts.gstatic.com`
-
-These are treated as non-core resources, with system font fallbacks available. The PWA configuration also uses cache-first strategies for those font resources.
-
-This means typography may fall back when the fonts are unavailable, but the application itself does not depend on those remote font resources for core functionality.
+**To install on iPhone:** open the deployed URL in **Safari** → **Share** → **Add to Home Screen** → enable **Open as Web App** → **Add**. Launch once while online first, so the browser has a chance to fully cache the shell before the first offline session.
 
 ---
 
-# Data Safety
+## Privacy
 
-Because the application is local-first, the browser's local database is the live collection.
+This repository is public. The collection it describes is not.
 
-That is both a strength and a responsibility.
-
-Clearing site/browser storage can potentially remove local application data.
-
-Possible causes include:
-
-* manually clearing website data
-* resetting a browser
-* resetting a device
-* removing application storage
-* destructive browser-storage operations
-
-Therefore:
-
-> **Maintain regular JSON backups.**
-
-The recommended backup sequence is:
-
-```text
-Make Collection Changes
-        ↓
-Export JSON
-        ↓
-Keep Backup
-        ↓
-Continue Using App
-```
-
-Before major application updates:
-
-```text
-Export JSON
-        ↓
-Update Application
-        ↓
-Verify Collection
-        ↓
-Continue
-```
+- No cover art, personal notes, or purchase data live in this repo — only the app and its seed catalogue of publicly-known album titles.
+- All collection data is stored locally via IndexedDB. Nothing is transmitted anywhere by default — there's no server for it to go to.
+- The optional `discogsId` field is a passive text reference only; Groove never calls out to Discogs or any other external API.
 
 ---
 
-# Troubleshooting
+## Project Status
 
-## The app doesn't work offline
+The MVP is complete, and the project is currently in an **active hardening pass** — tightening data consistency, tidying a few in-progress edges, and confirming everything behaves the way the docs say it does.
 
-First confirm that you have opened the production application successfully while online.
-
-Then:
-
-1. Close the application.
-2. Reopen it.
-3. Verify it works online.
-4. Disable Wi-Fi/cellular data.
-5. Launch it again.
-
-If necessary, inspect the browser's service-worker and site-storage state.
-
----
-
-## My records disappeared
-
-Do **not** immediately clear browser data or reinstall the application.
-
-First determine whether the browser's site storage was deleted.
-
-If you have a JSON backup:
-
-1. Open Groove.
-2. Open the application's data/settings controls.
-3. Select JSON restore/import.
-4. Allow validation to complete.
-5. Choose Merge or Replace All as appropriate.
-6. Verify the restored collection.
+| System | Status |
+|---|---|
+| Local IndexedDB database | ✅ Complete |
+| Library, search, filtering, sorting | ✅ Complete |
+| Record management + detail view | ✅ Complete |
+| Listening journal | ✅ Complete |
+| Discovery (6 live modes) | ✅ Complete |
+| Collection + listening analytics | ✅ Complete |
+| Registry Health | ✅ Complete |
+| Wishlist + acquisition workflow | ✅ Complete |
+| Research baseline (pressing-level provenance) | ✅ Complete |
+| JSON backup/restore + CSV export | ✅ Complete |
+| PWA / offline | ✅ Complete |
+| CI, CodeQL, Dependabot | ✅ Complete |
+| Discogs API integration | 🚫 Intentionally absent |
+| Generative-AI runtime integration | 🚫 Intentionally absent |
+| Cloud backend / sync | 🚫 Intentionally absent |
 
 ---
 
-## Why don't I have real album covers?
+## Design Principles
 
-This is intentional.
-
-The application does not depend on Discogs or another artwork provider.
-
-Records without a supplied cover image receive deterministic locally generated vinyl sleeves.
-
-This keeps the interface visually rich while preserving offline independence.
-
----
-
-## I entered a Discogs ID and nothing happened
-
-That is expected.
-
-The `discogsId` field is a passive reference.
-
-The application does not:
-
-* search Discogs
-* retrieve metadata
-* retrieve artwork
-* retrieve pricing
-* synchronize releases
+1. **IndexedDB stays canonical.** No remote database unless the architecture intentionally changes.
+2. **Listening logs stay canonical for history.** No manually maintained play counters — ever.
+3. **Derived metrics stay derived.** Play count, last-played, rankings, and analytics are always recalculated from source.
+4. **Discogs stays passive.** `discogsId` is a reference field, never an API dependency.
+5. **Artwork stays offline-safe.** External art should never become load-bearing for core function.
+6. **No AI in the runtime path.** The finished app shouldn't need a generative-AI call to work.
+7. **No cloud backend.** Core functionality stays usable with zero network access.
+8. **JSON is full-fidelity; CSV is not.** Don't blur that line.
+9. **Unknown data stays unknown.** Never fabricate a missing field to make the registry look more complete than it is.
+10. **Avoid feature creep.** Don't let this drift into a streaming service, a marketplace, a Discogs clone, or a social network.
 
 ---
 
-## The fonts look different offline
+## License
 
-The application uses Google Fonts when available, but the fonts are not the source of truth for the application.
-
-The HTML provides normal system-font fallbacks, and the PWA caches Google Fonts resources when available.
-
-Therefore:
-
-> Different typography while completely offline does not mean the application is broken.
+Licensed under **Apache-2.0** — see [`LICENSE`](LICENSE). Application source also carries Apache-2.0 SPDX headers.
 
 ---
 
-## My records aren't automatically appearing on another device
-
-This is expected.
-
-There is no cloud synchronization.
-
-Each device has its own local IndexedDB database.
-
-Use JSON export/import to move the collection.
-
----
-
-# Architecture Principles
-
-Future development should preserve the following rules.
-
-## 1. IndexedDB remains canonical
-
-Do not introduce a remote database unless the project's fundamental architecture is intentionally changed.
-
-## 2. Listening logs remain canonical for listening history
-
-Do not introduce manually maintained play counters.
-
-## 3. Derived metrics remain derived
-
-`playCount`, `lastPlayed`, rankings, and analytics should continue to be calculated from canonical data.
-
-## 4. Discogs remains passive metadata
-
-Do not convert `discogsId` into an API dependency.
-
-## 5. Artwork must remain offline-safe
-
-External artwork should never become necessary for core application functionality.
-
-## 6. Gemini remains absent from runtime architecture
-
-The finished application should not require an AI API to function.
-
-## 7. No cloud backend
-
-Core functionality should remain usable without a backend.
-
-## 8. JSON remains the full-fidelity backup
-
-CSV remains an interoperability format.
-
-## 9. Unknown data remains unknown
-
-Do not fabricate missing metadata.
-
-## 10. Stable IDs remain stable
-
-Record and listening-log IDs should not change during ordinary edits or backup/restore operations.
-
-## 11. Preserve referential integrity
-
-Deleting a record must appropriately handle its associated listening history.
-
-## 12. Avoid unnecessary feature creep
-
-The Registry should not gradually become:
-
-* a streaming service
-* a social network
-* a marketplace
-* a Discogs clone
-* a cloud synchronization platform
-* an AI recommendation platform
-
-unless that is an intentional future change in product direction.
-
----
-
-# Project Status
-
-## MVP — COMPLETE
-
-The MVP is considered complete.
-
-| System                     | Status                  |
-| -------------------------- | ----------------------- |
-| Local IndexedDB database   | ✅ Complete              |
-| Collection Library         | ✅ Complete              |
-| Record management          | ✅ Complete              |
-| Record detail              | ✅ Complete              |
-| Personal ratings           | ✅ Complete              |
-| Listening history          | ✅ Complete              |
-| Discovery                  | ✅ Complete              |
-| Collection analytics       | ✅ Complete              |
-| Listening analytics        | ✅ Complete              |
-| Registry Health            | ✅ Complete              |
-| Wishlist                   | ✅ Complete              |
-| Acquisition workflow       | ✅ Complete              |
-| JSON backup/restore        | ✅ Complete              |
-| CSV export                 | ✅ Complete              |
-| PWA                        | ✅ Complete              |
-| Offline architecture       | ✅ Confirmed             |
-| Mobile UX                  | ✅ Complete              |
-| Accessibility hardening    | ✅ Complete              |
-| External dependency audit  | ✅ Complete              |
-| Discogs integration        | 🚫 Intentionally absent |
-| Gemini runtime integration | 🚫 Intentionally absent |
-| Cloud backend              | 🚫 Intentionally absent |
-
-### Final Architectural Verdict
-
-> **GREEN — ARCHITECTURE CONFIRMED**
-
-The application is intentionally:
-
-* local-first
-* offline-capable
-* self-contained
-* privacy-oriented
-* portable
-* dependency-light at runtime
-* independent of Discogs
-* independent of Gemini
-* independent of cloud databases
-
----
-
-# Long-Term Philosophy
-
-The vinyl records themselves are physical objects.
-
-The Registry exists to preserve the information and experience surrounding those objects.
-
-The collection represents what you own.
-
-Listening history represents how you interact with it.
-
-Ratings represent personal judgment.
-
-Discovery helps you decide what comes next.
-
-Analytics reveal patterns you might otherwise miss.
-
-The Wishlist represents future intent.
-
-The backup system protects the accumulated record of all of it.
-
-The application therefore isn't simply an inventory.
-
-It is a **long-term personal archive of a physical collection and the relationship with that collection over time.**
-
-Its most important architectural property is also its simplest:
-
-> **The collection belongs to the collector — not to a cloud service, metadata provider, or application vendor.**
-
----
-
-# License
-
-This repository does not currently define a project license.
-
-If the repository is intended for public reuse, add an explicit license before representing the project as open source.
-
-Until then, the repository should be treated according to the copyright and usage rights of its owner.
-
----
-
-## Quick Start
-
-For users who don't need the technical documentation:
-
-### Install on iPhone
-
-1. Open the deployed Groove in **Safari** (`https://infinitive.github.io/Groove/`).
-2. Tap **Share**.
-3. Tap **Add to Home Screen**.
-4. Enable **Open as Web App**.
-5. Tap **Add**.
-6. Launch **Groove** from your Home Screen.
-
-### Protect your collection
-
-Periodically:
-
-**Settings/Data → Export JSON**
-
-Keep the resulting JSON backup somewhere safe.
-
-### Remember
-
-Your collection is stored locally.
-
-There is no automatic cloud synchronization.
-
-Your JSON backup is your portable, full-fidelity copy of the registry.
-
----
-
-## Repository
-
-**GitHub:** https://github.com/Infinitive/Groove
-
-**Default branch:** `main`
-
-**Project:** Groove
+<p align="center"><sub>Built for one shelf, one collector, one honest record of what's actually been played.</sub></p>
