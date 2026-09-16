@@ -26,7 +26,7 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
           <div>
             <h1 className="font-serif text-base font-semibold text-[#2D2D2A] tracking-tight leading-none">
-              Vinyl Registry
+              Groove
             </h1>
             <p className="text-[11px] font-mono text-[#726E65] leading-none mt-1">
               {collectionCount} {collectionCount === 1 ? 'Record' : 'Records'}

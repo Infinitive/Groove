@@ -2,7 +2,7 @@
 
 > **A private, local-first vinyl collection registry, listening journal, discovery engine, and collection intelligence system.**
 
-**Vinyl Collection Registry** is a mobile-first Progressive Web App (PWA) for cataloguing, exploring, and understanding a personal physical vinyl collection.
+**Groove** is a mobile-first Progressive Web App (PWA) for cataloguing, exploring, and understanding a personal physical vinyl collection.
 
 It combines:
 
@@ -67,7 +67,7 @@ The application is deliberately designed to work **without an account, backend, 
 
 # What Is This?
 
-Vinyl Collection Registry is a personal digital companion for a physical vinyl collection.
+Groove is a personal digital companion for a physical vinyl collection.
 
 It is not intended to replace a music player or become another cloud-based music platform.
 
@@ -101,7 +101,7 @@ A streaming service already knows:
 
 A physical collection does not.
 
-Vinyl Collection Registry is designed to provide that organizational and analytical layer while keeping the underlying data under the collector's control.
+Groove is designed to provide that organizational and analytical layer while keeping the underlying data under the collector's control.
 
 It can answer questions such as:
 
@@ -918,15 +918,11 @@ Apple supports adding a website to the iPhone Home Screen and opening it as a we
 
 ### 1. Open the deployed Registry
 
-On your iPhone, open **Safari** and navigate to the deployed Vinyl Collection Registry URL.
-
-For example:
+On your iPhone, open **Safari** and navigate to the deployed Groove URL:
 
 ```text
-https://your-deployed-vinyl-registry-url.example
+https://infinitive.github.io/Groove/
 ```
-
-Use the actual deployment URL for your installation.
 
 ### 2. Open Safari's Share menu
 
@@ -955,9 +951,9 @@ Then tap:
 
 **Add**
 
-### 5. Launch Vinyl Registry
+### 5. Launch Groove
 
-The Registry should now appear on your iPhone Home Screen.
+The application should now appear on your iPhone Home Screen.
 
 Launch it from the Home Screen icon.
 
@@ -1050,7 +1046,7 @@ The application does not maintain a cloud copy of the collection.
 
 # Privacy
 
-Vinyl Collection Registry is designed around local data ownership.
+Groove is designed around local data ownership.
 
 The finished application does not require:
 
@@ -1142,7 +1138,7 @@ The project currently uses:
 * **vite-plugin-pwa**
 * **Workbox through vite-plugin-pwa**
 
-The repository's current package configuration also contains development/runtime packages inherited from the AI Studio environment, including `@google/genai`, Express, and dotenv. They are not part of the application's intended runtime architecture.
+The application has no backend, server, or cloud dependencies. Inherited AI Studio scaffolding packages (`@google/genai`, Express, dotenv) have been removed from the repository.
 
 The application itself does not use Gemini or a server backend.
 
@@ -1192,7 +1188,6 @@ The repository also contains:
 ```text
 public/
 scripts/
-.env.example
 .gitignore
 bun.lock
 index.html
@@ -1208,30 +1203,30 @@ vite.config.ts
 
 ## Requirements
 
-A current Node.js installation and npm-compatible environment are sufficient for the repository's standard development scripts.
+A current Bun or Node.js environment is sufficient for the repository's standard development scripts.
 
 Clone the repository:
 
 ```bash
-git clone https://github.com/Infinitive/Vinyl-Registry.git
+git clone https://github.com/Infinitive/Groove.git
 ```
 
 Enter the repository:
 
 ```bash
-cd Vinyl-Registry
+cd Groove
 ```
 
 Install dependencies:
 
 ```bash
-npm install
+bun install --frozen-lockfile
 ```
 
 Start the development server:
 
 ```bash
-npm run dev
+bun run dev
 ```
 
 The repository's Vite development script runs on port `3000` and listens on `0.0.0.0`.
@@ -1243,13 +1238,13 @@ The repository's Vite development script runs on port `3000` and listens on `0.0
 Create a production build:
 
 ```bash
-npm run build
+bun run build
 ```
 
 Preview the production build:
 
 ```bash
-npm run preview
+bun run preview
 ```
 
 The production build is the appropriate environment for evaluating final PWA behavior.
@@ -1261,7 +1256,7 @@ The production build is the appropriate environment for evaluating final PWA beh
 The repository currently defines:
 
 ```bash
-npm run lint
+bun run lint
 ```
 
 The current `lint` script performs TypeScript checking with:
@@ -1290,11 +1285,11 @@ The current configuration:
 
 The application manifest identifies the application as:
 
-**Vinyl Collection Registry**
+**Groove**
 
 with the short name:
 
-**VinylReg**.
+**Groove**.
 
 The HTML document also declares Apple mobile-web-app metadata and an Apple touch icon.
 
@@ -1387,7 +1382,7 @@ First determine whether the browser's site storage was deleted.
 
 If you have a JSON backup:
 
-1. Open Vinyl Collection Registry.
+1. Open Groove.
 2. Open the application's data/settings controls.
 3. Select JSON restore/import.
 4. Allow validation to complete.
@@ -1606,12 +1601,12 @@ For users who don't need the technical documentation:
 
 ### Install on iPhone
 
-1. Open the deployed Vinyl Collection Registry in **Safari**.
+1. Open the deployed Groove in **Safari** (`https://infinitive.github.io/Groove/`).
 2. Tap **Share**.
 3. Tap **Add to Home Screen**.
 4. Enable **Open as Web App**.
 5. Tap **Add**.
-6. Launch **VinylReg** from your Home Screen.
+6. Launch **Groove** from your Home Screen.
 
 ### Protect your collection
 
@@ -1633,8 +1628,8 @@ Your JSON backup is your portable, full-fidelity copy of the registry.
 
 ## Repository
 
-**GitHub:** https://github.com/Infinitive/Vinyl-Registry
+**GitHub:** https://github.com/Infinitive/Groove
 
 **Default branch:** `main`
 
-**Project:** Vinyl Collection Registry
+**Project:** Groove

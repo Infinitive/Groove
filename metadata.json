@@ -1,5 +1,6 @@
 {
-  "name": "Vinyl Collection Registry",
+  "name": "Groove",
   "description": "Personal vinyl collection registry, discovery, and listening companion",
   "requestFramePermissions": [],
+  "majorCapabilities": []
 }

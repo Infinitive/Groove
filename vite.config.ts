@@ -6,7 +6,7 @@ import {VitePWA} from 'vite-plugin-pwa';
 
 export default defineConfig(({ command }) => {
   const isBuild = command === 'build';
-  const base = isBuild ? '/Vinyl-Registry/' : '/';
+  const base = isBuild ? '/Groove/' : '/';
 
   return {
     base,
@@ -18,8 +18,8 @@ export default defineConfig(({ command }) => {
         includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'icon.svg'],
         manifest: {
           id: base,
-          name: 'Vinyl Collection Registry',
-          short_name: 'VinylReg',
+          name: 'Groove',
+          short_name: 'Groove',
           description: 'Personal vinyl collection registry, discovery, and listening companion',
           theme_color: '#F4F1EA',
           background_color: '#F4F1EA',
