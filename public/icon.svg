@@ -1,92 +1,66 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" fill="none">
   <defs>
-    <!-- Background Gradient -->
-    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#18181B"/>
-      <stop offset="50%" stop-color="#09090B"/>
-      <stop offset="100%" stop-color="#000000"/>
+    <!-- Background Gradient (Subtle overhead studio lighting on dark matte) -->
+    <linearGradient id="bgGrad" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#262629"/>
+      <stop offset="25%" stop-color="#1C1C1F"/>
+      <stop offset="65%" stop-color="#131315"/>
+      <stop offset="100%" stop-color="#0A0A0C"/>
     </linearGradient>
 
-    <!-- Vinyl Disc Gradient -->
-    <radialGradient id="vinylGrad" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#1C1C1F"/>
-      <stop offset="70%" stop-color="#121215"/>
-      <stop offset="100%" stop-color="#08080A"/>
+    <!-- Top Rim Specular Highlight (Subtle chamfer highlight) -->
+    <linearGradient id="rimGrad" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.25"/>
+      <stop offset="15%" stop-color="#FFFFFF" stop-opacity="0.08"/>
+      <stop offset="45%" stop-color="#FFFFFF" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0.6"/>
+    </linearGradient>
+
+    <!-- Acoustic Waveform Ember Gradient -->
+    <linearGradient id="waveGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFA238"/>
+      <stop offset="25%" stop-color="#FF6616"/>
+      <stop offset="70%" stop-color="#F04804"/>
+      <stop offset="100%" stop-color="#D42C00"/>
+    </linearGradient>
+
+    <!-- Ambient Center Ember Glow -->
+    <radialGradient id="centerGlow" cx="50%" cy="50%" r="45%">
+      <stop offset="0%" stop-color="#FF5A10" stop-opacity="0.16"/>
+      <stop offset="55%" stop-color="#FF5A10" stop-opacity="0.04"/>
+      <stop offset="100%" stop-color="#FF5A10" stop-opacity="0"/>
     </radialGradient>
 
-    <!-- Center Label Hologram (Warm Ember Orange) -->
-    <linearGradient id="emberGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#FFA040"/>
-      <stop offset="40%" stop-color="#FF5A10"/>
-      <stop offset="85%" stop-color="#E03A00"/>
-      <stop offset="100%" stop-color="#A52600"/>
-    </linearGradient>
-
-    <!-- Holographic Sheen Highlights (Warm Ember / Bronze) -->
-    <linearGradient id="sheen1" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.32"/>
-      <stop offset="25%" stop-color="#FFA24A" stop-opacity="0.18"/>
-      <stop offset="50%" stop-color="#FFFFFF" stop-opacity="0"/>
-      <stop offset="75%" stop-color="#FF5A10" stop-opacity="0.16"/>
-      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.25"/>
-    </linearGradient>
-
-    <!-- Spindle Metal Accent -->
-    <linearGradient id="spindleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#F4F4F5"/>
-      <stop offset="50%" stop-color="#A1A1AA"/>
-      <stop offset="100%" stop-color="#3F3F46"/>
-    </linearGradient>
-
-    <filter id="emberGlow" x="-30%" y="-30%" width="160%" height="160%">
-      <feGaussianBlur stdDeviation="20" result="blur"/>
-      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    <!-- Drop Shadow for Tactile Elevation -->
+    <filter id="waveElevation" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#000000" flood-opacity="0.75"/>
+      <feDropShadow dx="0" dy="2.5" stdDeviation="2.5" flood-color="#000000" flood-opacity="0.5"/>
     </filter>
 
-    <clipPath id="squircle">
-      <rect width="512" height="512" rx="114" ry="114"/>
+    <clipPath id="squircleClip">
+      <rect width="512" height="512" rx="115" ry="115"/>
     </clipPath>
   </defs>
 
-  <g clip-path="url(#squircle)">
-    <!-- Base Canvas -->
+  <!-- Squircle Canvas -->
+  <g clip-path="url(#squircleClip)">
+    <!-- Base Matte Surface -->
     <rect width="512" height="512" fill="url(#bgGrad)"/>
-
-    <!-- Subtle Ambient Ember Glow -->
-    <circle cx="256" cy="256" r="190" fill="url(#emberGrad)" opacity="0.22" filter="url(#emberGlow)"/>
-
-    <!-- Vinyl Disc Body -->
-    <circle cx="256" cy="256" r="218" fill="url(#vinylGrad)" stroke="#27272A" stroke-width="2"/>
-
-    <!-- Precision Concentric Grooves -->
-    <circle cx="256" cy="256" r="210" stroke="#3F3F46" stroke-width="0.8" opacity="0.45"/>
-    <circle cx="256" cy="256" r="198" stroke="#52525B" stroke-width="0.75" opacity="0.35"/>
-    <circle cx="256" cy="256" r="186" stroke="#27272A" stroke-width="1.2" opacity="0.6"/>
-    <circle cx="256" cy="256" r="174" stroke="#71717A" stroke-width="0.75" opacity="0.35"/>
-    <circle cx="256" cy="256" r="162" stroke="#3F3F46" stroke-width="0.8" opacity="0.45"/>
-    <circle cx="256" cy="256" r="150" stroke="#52525B" stroke-width="0.9" opacity="0.5"/>
-    <circle cx="256" cy="256" r="138" stroke="#71717A" stroke-width="0.7" opacity="0.35"/>
-    <circle cx="256" cy="256" r="126" stroke="#3F3F46" stroke-width="1.1" opacity="0.55"/>
-    <circle cx="256" cy="256" r="114" stroke="#52525B" stroke-width="0.75" opacity="0.4"/>
-    <circle cx="256" cy="256" r="102" stroke="#27272A" stroke-width="1.2" opacity="0.6"/>
-
-    <!-- Holographic Light Cones -->
-    <path d="M 46 160 L 466 352 A 218 218 0 0 1 400 428 L 112 84 A 218 218 0 0 1 46 160 Z" fill="url(#sheen1)" opacity="0.65"/>
-    <path d="M 160 46 L 352 466 A 218 218 0 0 1 428 400 L 84 112 A 218 218 0 0 1 160 46 Z" fill="url(#sheen1)" opacity="0.45"/>
-
-    <!-- Center Label Area -->
-    <circle cx="256" cy="256" r="82" fill="#0C0A09" stroke="#3F3F46" stroke-width="2"/>
-    <circle cx="256" cy="256" r="76" fill="url(#emberGrad)"/>
-
-    <!-- Stylized Groove G Monogram -->
-    <path d="M 284 220 C 274 212 260 210 248 213 C 230 217 218 233 218 252 C 218 272 232 288 252 288 C 268 288 282 278 286 262 L 254 262" stroke="#FFFFFF" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.95"/>
     
-    <!-- Micro Center Spindle Ring -->
-    <circle cx="256" cy="256" r="26" fill="#18181B" stroke="url(#spindleGrad)" stroke-width="3"/>
-    <circle cx="256" cy="256" r="12" fill="url(#spindleGrad)"/>
-    <circle cx="256" cy="256" r="6" fill="#09090B"/>
+    <!-- Ambient Heat & Overhead Light -->
+    <circle cx="256" cy="256" r="210" fill="url(#centerGlow)"/>
+    <ellipse cx="256" cy="30" rx="220" ry="120" fill="#FFFFFF" opacity="0.04"/>
 
-    <!-- Outer Chamfer Highlight -->
-    <rect width="512" height="512" rx="114" ry="114" fill="none" stroke="#FFFFFF" stroke-width="2" opacity="0.12"/>
+    <!-- Tactile Acoustic Waveform -->
+    <path d="M 0 256 L 50 256 C 74 256, 88 168, 108 168 C 132 168, 150 392, 176 392 C 204 392, 226 125, 256 125 C 286 125, 308 392, 336 392 C 362 392, 380 168, 404 168 C 424 168, 438 256, 462 256 L 512 256"
+          fill="none"
+          stroke="url(#waveGrad)"
+          stroke-width="28"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          filter="url(#waveElevation)"/>
+
+    <!-- Inner Rim Stroke Highlight -->
+    <rect width="512" height="512" rx="115" ry="115" fill="none" stroke="url(#rimGrad)" stroke-width="2.5"/>
   </g>
 </svg>

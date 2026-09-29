@@ -10,6 +10,7 @@ import {
   HardDrive,
   CheckCircle2,
 } from 'lucide-react';
+import { PWAInstallButton } from './PWAInstallButton';
 
 interface SettingsModalProps {
   isOpen?: boolean;
@@ -178,6 +179,24 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               <span>{statusMessage.text}</span>
             </div>
           )}
+
+          {/* App Brand & Install */}
+          <div className="bg-neutral-950/60 border border-white/[0.08] rounded-2xl p-3.5 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <img
+                src="/icon.svg"
+                alt="Groove Icon"
+                className="w-11 h-11 rounded-xl shadow-lg border border-white/10"
+              />
+              <div>
+                <h4 className="text-sm font-bold text-white leading-tight">Groove</h4>
+                <p className="text-[11px] text-[#8E8E93] leading-tight mt-0.5">
+                  Vinyl Registry &amp; Listening Companion
+                </p>
+              </div>
+            </div>
+            <PWAInstallButton />
+          </div>
 
           {/* Storage Summary */}
           <div className="bg-neutral-950/60 border border-white/[0.08] rounded-2xl p-4">
