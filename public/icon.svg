@@ -1,11 +1,92 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
-  <rect width="512" height="512" rx="128" fill="#18181b"/>
-  <circle cx="256" cy="256" r="216" fill="#121214" stroke="#27272a" stroke-width="6"/>
-  <circle cx="256" cy="256" r="190" stroke="#27272a" stroke-width="1.5" stroke-dasharray="8 4" opacity="0.6"/>
-  <circle cx="256" cy="256" r="165" stroke="#27272a" stroke-width="1.5" stroke-dasharray="12 6" opacity="0.6"/>
-  <circle cx="256" cy="256" r="140" stroke="#27272a" stroke-width="1.5" stroke-dasharray="6 3" opacity="0.6"/>
-  <circle cx="256" cy="256" r="115" stroke="#27272a" stroke-width="1.5" stroke-dasharray="10 5" opacity="0.6"/>
-  <circle cx="256" cy="256" r="80" fill="#d97706" stroke="#b45309" stroke-width="4"/>
-  <circle cx="256" cy="256" r="24" fill="#18181b" stroke="#f59e0b" stroke-width="2"/>
-  <circle cx="256" cy="256" r="8" fill="#f4f4f5"/>
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#18181B"/>
+      <stop offset="50%" stop-color="#09090B"/>
+      <stop offset="100%" stop-color="#000000"/>
+    </linearGradient>
+
+    <!-- Vinyl Disc Gradient -->
+    <radialGradient id="vinylGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#1C1C1F"/>
+      <stop offset="70%" stop-color="#121215"/>
+      <stop offset="100%" stop-color="#08080A"/>
+    </radialGradient>
+
+    <!-- Center Label Hologram (Warm Ember Orange) -->
+    <linearGradient id="emberGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFA040"/>
+      <stop offset="40%" stop-color="#FF5A10"/>
+      <stop offset="85%" stop-color="#E03A00"/>
+      <stop offset="100%" stop-color="#A52600"/>
+    </linearGradient>
+
+    <!-- Holographic Sheen Highlights (Warm Ember / Bronze) -->
+    <linearGradient id="sheen1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.32"/>
+      <stop offset="25%" stop-color="#FFA24A" stop-opacity="0.18"/>
+      <stop offset="50%" stop-color="#FFFFFF" stop-opacity="0"/>
+      <stop offset="75%" stop-color="#FF5A10" stop-opacity="0.16"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.25"/>
+    </linearGradient>
+
+    <!-- Spindle Metal Accent -->
+    <linearGradient id="spindleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F4F4F5"/>
+      <stop offset="50%" stop-color="#A1A1AA"/>
+      <stop offset="100%" stop-color="#3F3F46"/>
+    </linearGradient>
+
+    <filter id="emberGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="20" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+
+    <clipPath id="squircle">
+      <rect width="512" height="512" rx="114" ry="114"/>
+    </clipPath>
+  </defs>
+
+  <g clip-path="url(#squircle)">
+    <!-- Base Canvas -->
+    <rect width="512" height="512" fill="url(#bgGrad)"/>
+
+    <!-- Subtle Ambient Ember Glow -->
+    <circle cx="256" cy="256" r="190" fill="url(#emberGrad)" opacity="0.22" filter="url(#emberGlow)"/>
+
+    <!-- Vinyl Disc Body -->
+    <circle cx="256" cy="256" r="218" fill="url(#vinylGrad)" stroke="#27272A" stroke-width="2"/>
+
+    <!-- Precision Concentric Grooves -->
+    <circle cx="256" cy="256" r="210" stroke="#3F3F46" stroke-width="0.8" opacity="0.45"/>
+    <circle cx="256" cy="256" r="198" stroke="#52525B" stroke-width="0.75" opacity="0.35"/>
+    <circle cx="256" cy="256" r="186" stroke="#27272A" stroke-width="1.2" opacity="0.6"/>
+    <circle cx="256" cy="256" r="174" stroke="#71717A" stroke-width="0.75" opacity="0.35"/>
+    <circle cx="256" cy="256" r="162" stroke="#3F3F46" stroke-width="0.8" opacity="0.45"/>
+    <circle cx="256" cy="256" r="150" stroke="#52525B" stroke-width="0.9" opacity="0.5"/>
+    <circle cx="256" cy="256" r="138" stroke="#71717A" stroke-width="0.7" opacity="0.35"/>
+    <circle cx="256" cy="256" r="126" stroke="#3F3F46" stroke-width="1.1" opacity="0.55"/>
+    <circle cx="256" cy="256" r="114" stroke="#52525B" stroke-width="0.75" opacity="0.4"/>
+    <circle cx="256" cy="256" r="102" stroke="#27272A" stroke-width="1.2" opacity="0.6"/>
+
+    <!-- Holographic Light Cones -->
+    <path d="M 46 160 L 466 352 A 218 218 0 0 1 400 428 L 112 84 A 218 218 0 0 1 46 160 Z" fill="url(#sheen1)" opacity="0.65"/>
+    <path d="M 160 46 L 352 466 A 218 218 0 0 1 428 400 L 84 112 A 218 218 0 0 1 160 46 Z" fill="url(#sheen1)" opacity="0.45"/>
+
+    <!-- Center Label Area -->
+    <circle cx="256" cy="256" r="82" fill="#0C0A09" stroke="#3F3F46" stroke-width="2"/>
+    <circle cx="256" cy="256" r="76" fill="url(#emberGrad)"/>
+
+    <!-- Stylized Groove G Monogram -->
+    <path d="M 284 220 C 274 212 260 210 248 213 C 230 217 218 233 218 252 C 218 272 232 288 252 288 C 268 288 282 278 286 262 L 254 262" stroke="#FFFFFF" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.95"/>
+    
+    <!-- Micro Center Spindle Ring -->
+    <circle cx="256" cy="256" r="26" fill="#18181B" stroke="url(#spindleGrad)" stroke-width="3"/>
+    <circle cx="256" cy="256" r="12" fill="url(#spindleGrad)"/>
+    <circle cx="256" cy="256" r="6" fill="#09090B"/>
+
+    <!-- Outer Chamfer Highlight -->
+    <rect width="512" height="512" rx="114" ry="114" fill="none" stroke="#FFFFFF" stroke-width="2" opacity="0.12"/>
+  </g>
 </svg>

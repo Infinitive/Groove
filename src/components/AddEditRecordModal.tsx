@@ -1,79 +1,63 @@
 import React, { useState, useEffect } from 'react';
-import { X, AlertCircle, ChevronDown, ChevronUp, Plus, Disc3 } from 'lucide-react';
+import { X, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { Album } from '../types';
 import { RatingStars } from './RatingStars';
 
 interface AddEditRecordModalProps {
-  existingAlbum?: Album; // If editing
-  allAlbums: Album[]; // For duplicate warning
+  isOpen?: boolean;
+  mode?: 'add' | 'edit';
+  album?: Album;
+  existingAlbum?: Album;
+  allAlbums?: Album[];
   onSave: (albumData: Omit<Album, 'id' | 'addedAt' | 'updatedAt'> | Album) => Promise<void>;
   onClose: () => void;
 }
 
 export const AddEditRecordModal: React.FC<AddEditRecordModalProps> = ({
+  album,
   existingAlbum,
-  allAlbums,
+  allAlbums = [],
   onSave,
   onClose,
 }) => {
-  const isEditing = Boolean(existingAlbum);
+  const activeRecord = album || existingAlbum;
+  const isEditing = Boolean(activeRecord);
 
   // Form states
-  const [artist, setArtist] = useState(existingAlbum?.artist || '');
-  const [title, setTitle] = useState(existingAlbum?.title || '');
-  const [releaseYear, setReleaseYear] = useState<string>(existingAlbum?.releaseYear?.toString() || '');
-  const [genresText, setGenresText] = useState(existingAlbum?.genres?.join(', ') || '');
-  const [stylesText, setStylesText] = useState(existingAlbum?.styles?.join(', ') || '');
-  const [format, setFormat] = useState(existingAlbum?.format || '');
-  const [edition, setEdition] = useState(existingAlbum?.edition || '');
-  const [variant, setVariant] = useState(existingAlbum?.variant || '');
-  const [label, setLabel] = useState(existingAlbum?.label || '');
-  const [country, setCountry] = useState(existingAlbum?.country || '');
-  const [rpm, setRpm] = useState(existingAlbum?.rpm || '');
-  const [discCount, setDiscCount] = useState<string>(existingAlbum?.discCount?.toString() || '');
-  const [catalogNumber, setCatalogNumber] = useState(existingAlbum?.catalogNumber || '');
-  const [extrasText, setExtrasText] = useState(existingAlbum?.packagingExtras?.join(', ') || '');
+  const [artist, setArtist] = useState(activeRecord?.artist || '');
+  const [title, setTitle] = useState(activeRecord?.title || '');
+  const [releaseYear, setReleaseYear] = useState<string>(activeRecord?.releaseYear?.toString() || '');
+  const [genresText, setGenresText] = useState(activeRecord?.genres?.join(', ') || '');
+  const [stylesText, setStylesText] = useState(activeRecord?.styles?.join(', ') || '');
+  const [format, setFormat] = useState(activeRecord?.format || '');
+  const [edition, setEdition] = useState(activeRecord?.edition || '');
+  const [variant, setVariant] = useState(activeRecord?.variant || '');
+  const [label, setLabel] = useState(activeRecord?.label || '');
+  const [country, setCountry] = useState(activeRecord?.country || '');
+  const [rpm, setRpm] = useState(activeRecord?.rpm || '');
+  const [discCount, setDiscCount] = useState<string>(activeRecord?.discCount?.toString() || '');
+  const [catalogNumber, setCatalogNumber] = useState(activeRecord?.catalogNumber || '');
   const [purchasePrice, setPurchasePrice] = useState<string>(
-    existingAlbum?.purchasePrice !== undefined ? existingAlbum.purchasePrice.toString() : ''
+    activeRecord?.purchasePrice !== undefined ? activeRecord.purchasePrice.toString() : ''
   );
-  const [purchaseDate, setPurchaseDate] = useState(existingAlbum?.purchaseDate || '');
-  const [personalRating, setPersonalRating] = useState<number>(existingAlbum?.personalRating || 0);
-  const [notes, setNotes] = useState(existingAlbum?.notes || '');
-  const [coverImage, setCoverImage] = useState(existingAlbum?.coverImage || '');
+  const [purchaseDate, setPurchaseDate] = useState(activeRecord?.purchaseDate || '');
+  const [personalRating, setPersonalRating] = useState<number>(activeRecord?.personalRating || 0);
+  const [notes, setNotes] = useState(activeRecord?.notes || '');
+  const [coverImage, setCoverImage] = useState(activeRecord?.coverImage || '');
 
-  // Phase 6 physical master states
-  const [physicalIdentifier, setPhysicalIdentifier] = useState(existingAlbum?.physicalIdentifier || '');
-  const [identifierType, setIdentifierType] = useState(existingAlbum?.identifierType || '');
-  const [barcode, setBarcode] = useState(existingAlbum?.barcode || '');
-  const [matrixRunout, setMatrixRunout] = useState(existingAlbum?.matrixRunout || '');
-  const [pressingPlant, setPressingPlant] = useState(existingAlbum?.pressingPlant || '');
-  const [vinylWeight, setVinylWeight] = useState(existingAlbum?.vinylWeight || '');
-  const [researchNotes, setResearchNotes] = useState(existingAlbum?.researchNotes || '');
+  // Matrix Runout & Identifiers
+  const [barcode, setBarcode] = useState(activeRecord?.barcode || '');
+  const [matrixRunout, setMatrixRunout] = useState(activeRecord?.matrixRunout || '');
+  const [pressingPlant, setPressingPlant] = useState(activeRecord?.pressingPlant || '');
+  const [vinylWeight, setVinylWeight] = useState(activeRecord?.vinylWeight || '');
 
   const [showAdvanced, setShowAdvanced] = useState(isEditing);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
-  // Check for duplicate in collection (excluding current album if editing)
-  const duplicateMatch = React.useMemo(() => {
-    if (!artist.trim() || !title.trim()) return null;
-    const cleanArtist = artist.trim().toLowerCase();
-    const cleanTitle = title.trim().toLowerCase();
-
-    return allAlbums.find(
-      (a) =>
-        a.id !== existingAlbum?.id &&
-        a.artist.trim().toLowerCase() === cleanArtist &&
-        a.title.trim().toLowerCase() === cleanTitle
-    );
-  }, [artist, title, allAlbums, existingAlbum?.id]);
-
-  // Handle Escape key
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
+      if (e.key === 'Escape') onClose();
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
@@ -104,15 +88,10 @@ export const AddEditRecordModal: React.FC<AddEditRecordModalProps> = ({
         .map((s) => s.trim())
         .filter(Boolean);
 
-      const packagingExtras = extrasText
-        .split(',')
-        .map((s) => s.trim())
-        .filter(Boolean);
-
-      const albumData = {
+      const albumPayload = {
         artist: artist.trim(),
         title: title.trim(),
-        releaseYear: parsedYear && !isNaN(parsedYear) ? parsedYear : undefined,
+        releaseYear: parsedYear,
         genres: genres.length > 0 ? genres : undefined,
         styles: styles.length > 0 ? styles : undefined,
         format: format.trim() || undefined,
@@ -121,37 +100,26 @@ export const AddEditRecordModal: React.FC<AddEditRecordModalProps> = ({
         label: label.trim() || undefined,
         country: country.trim() || undefined,
         rpm: rpm.trim() || undefined,
-        discCount: parsedDiscCount && !isNaN(parsedDiscCount) ? parsedDiscCount : undefined,
+        discCount: parsedDiscCount,
         catalogNumber: catalogNumber.trim() || undefined,
-        physicalIdentifier: physicalIdentifier.trim() || undefined,
-        identifierType: identifierType.trim() || undefined,
-        barcode: barcode.trim() || undefined,
-        matrixRunout: matrixRunout.trim() || undefined,
-        pressingPlant: pressingPlant.trim() || undefined,
-        vinylWeight: vinylWeight.trim() || undefined,
-        researchNotes: researchNotes.trim() || undefined,
-        packagingExtras: packagingExtras.length > 0 ? packagingExtras : undefined,
-        purchasePrice: parsedPrice && !isNaN(parsedPrice) ? parsedPrice : undefined,
+        purchasePrice: parsedPrice,
         purchaseDate: purchaseDate.trim() || undefined,
         personalRating: personalRating > 0 ? personalRating : undefined,
         notes: notes.trim() || undefined,
         coverImage: coverImage.trim() || undefined,
+        barcode: barcode.trim() || undefined,
+        matrixRunout: matrixRunout.trim() || undefined,
+        pressingPlant: pressingPlant.trim() || undefined,
+        vinylWeight: vinylWeight.trim() || undefined,
       };
 
-      if (isEditing && existingAlbum) {
-        await onSave({
-          ...existingAlbum,
-          ...albumData,
-        });
+      if (isEditing && activeRecord) {
+        await onSave({ ...activeRecord, ...albumPayload });
       } else {
-        await onSave(albumData);
+        await onSave(albumPayload as any);
       }
-
-      onClose();
-    } catch (err) {
-      console.error(err);
-      setFormError(err instanceof Error ? err.message : 'Failed to save album');
-    } finally {
+    } catch (err: any) {
+      setFormError(err.message || 'Failed to save record.');
       setSaving(false);
     }
   };
@@ -162,449 +130,249 @@ export const AddEditRecordModal: React.FC<AddEditRecordModalProps> = ({
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
-      className="fixed inset-0 z-50 overflow-y-auto bg-[#2D2D2A]/60 backdrop-blur-sm flex justify-center p-0 sm:p-4"
+      className="fixed inset-0 z-50 bg-black/65 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fade-in"
     >
-      <div className="w-full max-w-xl min-h-screen sm:min-h-0 sm:my-auto rounded-none sm:rounded-3xl bg-[#F4F1EA] border-0 sm:border border-[#D9D4C7] text-[#2D2D2A] shadow-2xl flex flex-col overflow-hidden">
-        {/* Header */}
-        <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-4 bg-[#F4F1EA]/95 backdrop-blur-md border-b border-[#D9D4C7]">
-          <div className="flex items-center gap-2">
-            <Disc3 className="w-4 h-4 text-[#5D614E]" />
-            <h3 className="font-serif text-base font-semibold text-[#2D2D2A]">
-              {isEditing ? 'Edit Record' : 'Add Record to Registry'}
-            </h3>
-          </div>
+      <div
+        id="add-edit-record-sheet"
+        className="w-full sm:max-w-xl max-h-[92vh] sm:max-h-[85vh] bg-neutral-900/95 backdrop-blur-2xl border-t sm:border border-white/10 rounded-t-[28px] sm:rounded-3xl flex flex-col shadow-2xl overflow-hidden animate-slide-up"
+      >
+        {/* iOS Grab Handle */}
+        <div className="pt-3 pb-1 flex justify-center flex-shrink-0 cursor-grab active:cursor-grabbing">
+          <div className="w-10 h-1.5 rounded-full bg-white/25" />
+        </div>
+
+        {/* Modal Header */}
+        <div className="px-5 py-2.5 flex items-center justify-between border-b border-white/[0.06] flex-shrink-0">
+          <h3 className="text-base font-bold text-white tracking-tight">
+            {isEditing ? 'Edit Record' : 'Add New Record'}
+          </h3>
           <button
             onClick={onClose}
-            className="p-1.5 text-[#726E65] hover:text-[#2D2D2A] hover:bg-[#EAE6DC] rounded-full transition"
+            aria-label="Close"
+            className="w-7 h-7 rounded-full bg-white/[0.08] hover:bg-white/[0.15] text-neutral-300 hover:text-white flex items-center justify-center transition cursor-pointer"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-5 space-y-5 overflow-y-auto flex-1">
+        {/* Form Content */}
+        <form onSubmit={handleSubmit} className="p-5 overflow-y-auto space-y-4 flex-1">
           {formError && (
-            <div className="p-3 rounded-xl bg-[#8A5A53]/10 border border-[#8A5A53]/30 text-[#733F39] text-xs flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+            <div className="p-3 rounded-xl bg-red-950/40 border border-red-500/20 text-red-200 text-xs flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
               <span>{formError}</span>
             </div>
           )}
 
-          {/* Duplicate Warning if matching existing record */}
-          {duplicateMatch && (
-            <div className="p-3 rounded-xl bg-[#B3804D]/15 border border-[#B3804D]/30 text-[#694825] text-xs flex items-start gap-2.5">
-              <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-[#8C5D30]" />
-              <div className="space-y-0.5">
-                <span className="font-semibold block">You may already own this record</span>
-                <p className="text-[#726E65] text-[11px]">
-                  Found "{duplicateMatch.title}" by {duplicateMatch.artist} in your collection. You can still save if this is another copy or pressing variant.
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Primary Quick Fields */}
-          <div className="space-y-3">
+          {/* Inset Group: Primary Metadata */}
+          <div className="bg-neutral-950/60 border border-white/[0.08] rounded-2xl p-4 space-y-3">
             <div>
-              <label className="block text-xs font-medium text-[#2D2D2A] mb-1">
-                Artist <span className="text-[#8A5A53]">*</span>
+              <label className="text-xs font-semibold text-[#8E8E93] block mb-1">
+                Artist <span className="text-[#FF5A10]">*</span>
               </label>
               <input
-                id="input-album-artist"
                 type="text"
                 required
                 value={artist}
                 onChange={(e) => setArtist(e.target.value)}
-                placeholder="e.g. Kacey Musgraves"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#D9D4C7] focus:border-[#5D614E] focus:outline-hidden text-sm text-[#2D2D2A] placeholder:text-[#A6A295] transition"
+                placeholder="e.g. Pink Floyd, Jungle, Miles Davis"
+                className="w-full px-3 py-2 rounded-xl bg-neutral-900 border border-white/[0.08] text-sm text-white placeholder:text-neutral-500 focus:border-[#FF5A10] focus:outline-hidden"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-[#2D2D2A] mb-1">
-                Album Title <span className="text-[#8A5A53]">*</span>
+              <label className="text-xs font-semibold text-[#8E8E93] block mb-1">
+                Album Title <span className="text-[#FF5A10]">*</span>
               </label>
               <input
-                id="input-album-title"
                 type="text"
                 required
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g. Golden Hour"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#D9D4C7] focus:border-[#5D614E] focus:outline-hidden text-sm text-[#2D2D2A] placeholder:text-[#A6A295] transition"
+                placeholder="e.g. The Dark Side of the Moon"
+                className="w-full px-3 py-2 rounded-xl bg-neutral-900 border border-white/[0.08] text-sm text-white placeholder:text-neutral-500 focus:border-[#FF5A10] focus:outline-hidden"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-semibold text-[#8E8E93] block mb-1">Release Year</label>
+                <input
+                  type="number"
+                  min="1900"
+                  max="2100"
+                  value={releaseYear}
+                  onChange={(e) => setReleaseYear(e.target.value)}
+                  placeholder="1973"
+                  className="w-full px-3 py-2 rounded-xl bg-neutral-900 border border-white/[0.08] text-sm text-white placeholder:text-neutral-500 focus:border-[#FF5A10] focus:outline-hidden"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-[#8E8E93] block mb-1">Format</label>
+                <input
+                  type="text"
+                  value={format}
+                  onChange={(e) => setFormat(e.target.value)}
+                  placeholder="LP, 2xLP, 180g"
+                  className="w-full px-3 py-2 rounded-xl bg-neutral-900 border border-white/[0.08] text-sm text-white placeholder:text-neutral-500 focus:border-[#FF5A10] focus:outline-hidden"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Inset Group: Genre & Pressing Edition */}
+          <div className="bg-neutral-950/60 border border-white/[0.08] rounded-2xl p-4 space-y-3">
+            <div>
+              <label className="text-xs font-semibold text-[#8E8E93] block mb-1">Genres (comma-separated)</label>
+              <input
+                type="text"
+                value={genresText}
+                onChange={(e) => setGenresText(e.target.value)}
+                placeholder="Progressive Rock, Psychedelic, Funk"
+                className="w-full px-3 py-2 rounded-xl bg-neutral-900 border border-white/[0.08] text-sm text-white placeholder:text-neutral-500 focus:border-[#FF5A10] focus:outline-hidden"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-semibold text-[#8E8E93] block mb-1">Edition / Variant</label>
+                <input
+                  type="text"
+                  value={edition}
+                  onChange={(e) => setEdition(e.target.value)}
+                  placeholder="50th Anniversary, Amber Splatter"
+                  className="w-full px-3 py-2 rounded-xl bg-neutral-900 border border-white/[0.08] text-sm text-white placeholder:text-neutral-500 focus:border-[#FF5A10] focus:outline-hidden"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-[#8E8E93] block mb-1">Record Label</label>
+                <input
+                  type="text"
+                  value={label}
+                  onChange={(e) => setLabel(e.target.value)}
+                  placeholder="Harvest, Columbia, Warp"
+                  className="w-full px-3 py-2 rounded-xl bg-neutral-900 border border-white/[0.08] text-sm text-white placeholder:text-neutral-500 focus:border-[#FF5A10] focus:outline-hidden"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-[#8E8E93] block mb-1">Cover Artwork URL (Optional)</label>
+              <input
+                type="url"
+                value={coverImage}
+                onChange={(e) => setCoverImage(e.target.value)}
+                placeholder="https://images.unsplash.com/..."
+                className="w-full px-3 py-2 rounded-xl bg-neutral-900 border border-white/[0.08] text-sm text-white placeholder:text-neutral-500 focus:border-[#FF5A10] focus:outline-hidden"
               />
             </div>
           </div>
 
-          {/* Quick Rating on New/Edit */}
-          <div className="p-3 rounded-xl bg-white border border-[#D9D4C7] flex items-center justify-between">
+          {/* Inset Group: Personal Rating & Notes */}
+          <div className="bg-neutral-950/60 border border-white/[0.08] rounded-2xl p-4 space-y-3">
             <div>
-              <span className="text-xs font-medium text-[#2D2D2A] block">Personal Rating</span>
-              <span className="text-[11px] text-[#726E65]">Tap to rate in half-stars</span>
+              <label className="text-xs font-semibold text-[#8E8E93] block mb-1.5">Personal Rating</label>
+              <div className="flex items-center gap-3">
+                <RatingStars value={personalRating} size="md" onChange={setPersonalRating} />
+                <span className="text-xs text-[#8E8E93]">
+                  {personalRating > 0 ? `${personalRating} / 5 stars` : 'Unrated'}
+                </span>
+              </div>
             </div>
-            <RatingStars
-              value={personalRating}
-              onChange={setPersonalRating}
-              size="md"
-              showLabel
-            />
+
+            <div>
+              <label className="text-xs font-semibold text-[#8E8E93] block mb-1">Collector Notes</label>
+              <textarea
+                rows={2}
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Original Japanese pressing with OBI strip, dead silent playback..."
+                className="w-full px-3 py-2 rounded-xl bg-neutral-900 border border-white/[0.08] text-sm text-white placeholder:text-neutral-500 focus:border-[#FF5A10] focus:outline-hidden resize-none"
+              />
+            </div>
           </div>
 
-          {/* Progressive Details Toggle */}
+          {/* Advanced Physical Matrix Fields Accordion */}
           <div className="pt-1">
             <button
               type="button"
               onClick={() => setShowAdvanced(!showAdvanced)}
-              className="w-full py-2 px-3 rounded-xl bg-white hover:bg-[#EAE6DC] border border-[#D9D4C7] text-xs font-medium text-[#474A3D] flex items-center justify-between transition"
+              className="w-full py-2 flex items-center justify-between text-xs font-semibold text-[#8E8E93] hover:text-white cursor-pointer"
             >
-              <span>{showAdvanced ? 'Hide Additional Details' : 'Add Edition, Year, Format & Notes'}</span>
+              <span>Deadwax, Matrix Runout & Purchase Info</span>
               {showAdvanced ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             </button>
-          </div>
 
-          {/* Expanded Sections */}
-          {showAdvanced && (
-            <div className="space-y-4 pt-2 animate-in fade-in duration-150">
-              {/* Release & Physical Details */}
-              <div className="p-3.5 rounded-2xl bg-white border border-[#D9D4C7] space-y-3 shadow-xs">
-                <span className="text-xs font-mono uppercase text-[#726E65] tracking-wider block font-semibold">
-                  Record & Pressing
-                </span>
-
+            {showAdvanced && (
+              <div className="bg-neutral-950/60 border border-white/[0.08] rounded-2xl p-4 space-y-3 mt-2">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-[11px] text-[#726E65] mb-1 font-medium">Release Year</label>
-                    <input
-                      type="number"
-                      value={releaseYear}
-                      onChange={(e) => setReleaseYear(e.target.value)}
-                      placeholder="e.g. 2018"
-                      className="w-full px-3 py-2 rounded-lg bg-[#FCFAF6] border border-[#D9D4C7] text-xs text-[#2D2D2A] placeholder:text-[#A6A295] focus:border-[#5D614E] focus:outline-hidden"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] text-[#726E65] mb-1 font-medium">Format</label>
-                    <select
-                      value={format}
-                      onChange={(e) => setFormat(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg bg-[#FCFAF6] border border-[#D9D4C7] text-xs text-[#2D2D2A] focus:border-[#5D614E] focus:outline-hidden"
-                    >
-                      <option value="">Not specified</option>
-                      <option value="LP">LP (12")</option>
-                      <option value="2xLP">2xLP Gatefold</option>
-                      <option value="Box Set">Box Set</option>
-                      <option value="Picture Disc">Picture Disc</option>
-                      <option value="7&quot;">7" Single</option>
-                      <option value="10&quot;">10" EP</option>
-                      <option value="12&quot; Single">12" Maxi Single</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-[11px] text-[#726E65] mb-1 font-medium">Speed</label>
-                    <select
-                      value={rpm}
-                      onChange={(e) => setRpm(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg bg-[#FCFAF6] border border-[#D9D4C7] text-xs text-[#2D2D2A] focus:border-[#5D614E] focus:outline-hidden"
-                    >
-                      <option value="">Not specified</option>
-                      <option value="33 ⅓">33 ⅓ RPM</option>
-                      <option value="45">45 RPM</option>
-                      <option value="78">78 RPM</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] text-[#726E65] mb-1 font-medium">Disc Count</label>
-                    <input
-                      type="number"
-                      min="1"
-                      placeholder="e.g. 1"
-                      value={discCount}
-                      onChange={(e) => setDiscCount(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg bg-[#FCFAF6] border border-[#D9D4C7] text-xs text-[#2D2D2A] placeholder:text-[#A6A295] focus:border-[#5D614E] focus:outline-hidden"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-[11px] text-[#726E65] mb-1 font-medium">
-                      Genres (comma separated)
-                    </label>
-                    <input
-                      type="text"
-                      value={genresText}
-                      onChange={(e) => setGenresText(e.target.value)}
-                      placeholder="e.g. Rock, Pop, Funk/Soul"
-                      className="w-full px-3 py-2 rounded-lg bg-[#FCFAF6] border border-[#D9D4C7] text-xs text-[#2D2D2A] placeholder:text-[#A6A295] focus:border-[#5D614E] focus:outline-hidden"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] text-[#726E65] mb-1 font-medium">
-                      Styles (comma separated)
-                    </label>
-                    <input
-                      type="text"
-                      value={stylesText}
-                      onChange={(e) => setStylesText(e.target.value)}
-                      placeholder="e.g. Indie Rock, Nu-Disco, Synth-pop"
-                      className="w-full px-3 py-2 rounded-lg bg-[#FCFAF6] border border-[#D9D4C7] text-xs text-[#2D2D2A] placeholder:text-[#A6A295] focus:border-[#5D614E] focus:outline-hidden"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Edition & Variant Details */}
-              <div className="p-3.5 rounded-2xl bg-white border border-[#D9D4C7] space-y-3 shadow-xs">
-                <span className="text-xs font-mono uppercase text-[#726E65] tracking-wider block font-semibold">
-                  Edition & Packaging
-                </span>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-[11px] text-[#726E65] mb-1 font-medium">Edition</label>
-                    <input
-                      type="text"
-                      value={edition}
-                      onChange={(e) => setEdition(e.target.value)}
-                      placeholder="e.g. Target Exclusive, 25th Anniv"
-                      className="w-full px-3 py-2 rounded-lg bg-[#FCFAF6] border border-[#D9D4C7] text-xs text-[#2D2D2A] placeholder:text-[#A6A295] focus:border-[#5D614E] focus:outline-hidden"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] text-[#726E65] mb-1 font-medium">Color / Variant</label>
-                    <input
-                      type="text"
-                      value={variant}
-                      onChange={(e) => setVariant(e.target.value)}
-                      placeholder="e.g. Opaque Pink, Clear, Amber"
-                      className="w-full px-3 py-2 rounded-lg bg-[#FCFAF6] border border-[#D9D4C7] text-xs text-[#2D2D2A] placeholder:text-[#A6A295] focus:border-[#5D614E] focus:outline-hidden"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-[11px] text-[#726E65] mb-1 font-medium">Record Label</label>
-                    <input
-                      type="text"
-                      value={label}
-                      onChange={(e) => setLabel(e.target.value)}
-                      placeholder="e.g. MCA Nashville"
-                      className="w-full px-3 py-2 rounded-lg bg-[#FCFAF6] border border-[#D9D4C7] text-xs text-[#2D2D2A] placeholder:text-[#A6A295] focus:border-[#5D614E] focus:outline-hidden"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] text-[#726E65] mb-1 font-medium">Catalog Number</label>
-                    <input
-                      type="text"
-                      value={catalogNumber}
-                      onChange={(e) => setCatalogNumber(e.target.value)}
-                      placeholder="e.g. B0027921-01"
-                      className="w-full px-3 py-2 rounded-lg bg-[#FCFAF6] border border-[#D9D4C7] text-xs text-[#2D2D2A] placeholder:text-[#A6A295] focus:border-[#5D614E] focus:outline-hidden"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-[11px] text-[#726E65] mb-1 font-medium">
-                    Packaging Extras (comma separated)
-                  </label>
-                  <input
-                    type="text"
-                    value={extrasText}
-                    onChange={(e) => setExtrasText(e.target.value)}
-                    placeholder="e.g. Poster, Lyric Booklet, Art Print"
-                    className="w-full px-3 py-2 rounded-lg bg-[#FCFAF6] border border-[#D9D4C7] text-xs text-[#2D2D2A] placeholder:text-[#A6A295] focus:border-[#5D614E] focus:outline-hidden"
-                  />
-                </div>
-              </div>
-
-              {/* Physical Master & Identifiers */}
-              <div className="p-3.5 rounded-2xl bg-white border border-[#D9D4C7] space-y-3 shadow-xs">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-mono uppercase text-[#726E65] tracking-wider block font-semibold">
-                    Physical Master & Identifiers
-                  </span>
-                  <span className="text-[10px] font-mono text-[#726E65]">Verbatim Physical Record</span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-[11px] text-[#726E65] mb-1 font-medium">
-                      Physical Identifier (Verbatim)
-                    </label>
-                    <input
-                      type="text"
-                      value={physicalIdentifier}
-                      onChange={(e) => setPhysicalIdentifier(e.target.value)}
-                      placeholder="e.g. 0602458422399, XLI38LP, B242205"
-                      className="w-full px-3 py-2 rounded-lg bg-[#FCFAF6] border border-[#D9D4C7] font-mono text-xs text-[#2D2D2A] placeholder:text-[#A6A295] focus:border-[#5D614E] focus:outline-hidden"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] text-[#726E65] mb-1 font-medium">
-                      Identifier Type
-                    </label>
-                    <input
-                      type="text"
-                      value={identifierType}
-                      onChange={(e) => setIdentifierType(e.target.value)}
-                      placeholder="e.g. catalog / spine identifier, barcode"
-                      className="w-full px-3 py-2 rounded-lg bg-[#FCFAF6] border border-[#D9D4C7] text-xs text-[#2D2D2A] placeholder:text-[#A6A295] focus:border-[#5D614E] focus:outline-hidden"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-[11px] text-[#726E65] mb-1 font-medium">
-                      Barcode (UPC / EAN)
-                    </label>
-                    <input
-                      type="text"
-                      value={barcode}
-                      onChange={(e) => setBarcode(e.target.value)}
-                      placeholder="e.g. 602458422399"
-                      className="w-full px-3 py-2 rounded-lg bg-[#FCFAF6] border border-[#D9D4C7] font-mono text-xs text-[#2D2D2A] placeholder:text-[#A6A295] focus:border-[#5D614E] focus:outline-hidden"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] text-[#726E65] mb-1 font-medium">
-                      Vinyl Weight / Thickness
-                    </label>
-                    <input
-                      type="text"
-                      value={vinylWeight}
-                      onChange={(e) => setVinylWeight(e.target.value)}
-                      placeholder="e.g. 180g, 140g"
-                      className="w-full px-3 py-2 rounded-lg bg-[#FCFAF6] border border-[#D9D4C7] text-xs text-[#2D2D2A] placeholder:text-[#A6A295] focus:border-[#5D614E] focus:outline-hidden"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-[11px] text-[#726E65] mb-1 font-medium">
-                      Pressing Plant / Manufacturer
-                    </label>
-                    <input
-                      type="text"
-                      value={pressingPlant}
-                      onChange={(e) => setPressingPlant(e.target.value)}
-                      placeholder="e.g. GZ Media, RTI, Pallas"
-                      className="w-full px-3 py-2 rounded-lg bg-[#FCFAF6] border border-[#D9D4C7] text-xs text-[#2D2D2A] placeholder:text-[#A6A295] focus:border-[#5D614E] focus:outline-hidden"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] text-[#726E65] mb-1 font-medium">
-                      Matrix / Runout Grooves
-                    </label>
+                    <label className="text-xs font-semibold text-[#8E8E93] block mb-1">Matrix Runout</label>
                     <input
                       type="text"
                       value={matrixRunout}
                       onChange={(e) => setMatrixRunout(e.target.value)}
-                      placeholder="e.g. 268297E1/A, STERLING"
-                      className="w-full px-3 py-2 rounded-lg bg-[#FCFAF6] border border-[#D9D4C7] font-mono text-xs text-[#2D2D2A] placeholder:text-[#A6A295] focus:border-[#5D614E] focus:outline-hidden"
+                      placeholder="SHVL 804 A-1"
+                      className="w-full px-3 py-2 rounded-xl bg-neutral-900 border border-white/[0.08] text-xs text-white placeholder:text-neutral-500 focus:border-[#FF5A10] focus:outline-hidden font-mono"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-semibold text-[#8E8E93] block mb-1">Vinyl Weight</label>
+                    <input
+                      type="text"
+                      value={vinylWeight}
+                      onChange={(e) => setVinylWeight(e.target.value)}
+                      placeholder="180g / Standard"
+                      className="w-full px-3 py-2 rounded-xl bg-neutral-900 border border-white/[0.08] text-xs text-white placeholder:text-neutral-500 focus:border-[#FF5A10] focus:outline-hidden"
                     />
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-[11px] text-[#726E65] mb-1 font-medium">
-                    Research Notes & Discrepancies
-                  </label>
-                  <textarea
-                    rows={2}
-                    value={researchNotes}
-                    onChange={(e) => setResearchNotes(e.target.value)}
-                    placeholder="Physical discrepancies, runout etchings, variant confirmations..."
-                    className="w-full px-3 py-2 rounded-lg bg-[#FCFAF6] border border-[#D9D4C7] text-xs text-[#2D2D2A] placeholder:text-[#A6A295] focus:border-[#5D614E] focus:outline-hidden resize-none"
-                  />
-                </div>
-              </div>
-
-              {/* Personal Notes & Acquisition */}
-              <div className="p-3.5 rounded-2xl bg-white border border-[#D9D4C7] space-y-3 shadow-xs">
-                <span className="text-xs font-mono uppercase text-[#726E65] tracking-wider block font-semibold">
-                  Personal Notes & Purchase
-                </span>
-
-                <div>
-                  <label className="block text-[11px] text-[#726E65] mb-1 font-medium">Notes & Impressions</label>
-                  <textarea
-                    rows={3}
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    placeholder="Memories, thoughts on this pressing, favorite tracks..."
-                    className="w-full px-3 py-2 rounded-lg bg-[#FCFAF6] border border-[#D9D4C7] text-xs text-[#2D2D2A] placeholder:text-[#A6A295] focus:border-[#5D614E] focus:outline-hidden resize-none"
-                  />
-                </div>
-
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-[11px] text-[#726E65] mb-1 font-medium">Purchase Price ($)</label>
+                    <label className="text-xs font-semibold text-[#8E8E93] block mb-1">Purchase Price ($)</label>
                     <input
                       type="number"
                       step="0.01"
                       value={purchasePrice}
                       onChange={(e) => setPurchasePrice(e.target.value)}
                       placeholder="29.99"
-                      className="w-full px-3 py-2 rounded-lg bg-[#FCFAF6] border border-[#D9D4C7] text-xs text-[#2D2D2A] placeholder:text-[#A6A295] focus:border-[#5D614E] focus:outline-hidden"
+                      className="w-full px-3 py-2 rounded-xl bg-neutral-900 border border-white/[0.08] text-xs text-white placeholder:text-neutral-500 focus:border-[#FF5A10] focus:outline-hidden"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-[11px] text-[#726E65] mb-1 font-medium">Purchase Date</label>
+                    <label className="text-xs font-semibold text-[#8E8E93] block mb-1">Acquired Date</label>
                     <input
                       type="date"
                       value={purchaseDate}
                       onChange={(e) => setPurchaseDate(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg bg-[#FCFAF6] border border-[#D9D4C7] text-xs text-[#2D2D2A] focus:border-[#5D614E] focus:outline-hidden"
+                      className="w-full px-3 py-2 rounded-xl bg-neutral-900 border border-white/[0.08] text-xs text-white focus:border-[#FF5A10] focus:outline-hidden"
                     />
                   </div>
                 </div>
-
-                <div>
-                  <label className="block text-[11px] text-[#726E65] mb-1 font-medium">Cover Image URL (optional)</label>
-                  <input
-                    type="url"
-                    value={coverImage}
-                    onChange={(e) => setCoverImage(e.target.value)}
-                    placeholder="https://..."
-                    className="w-full px-3 py-2 rounded-lg bg-[#FCFAF6] border border-[#D9D4C7] text-xs text-[#2D2D2A] placeholder:text-[#A6A295] focus:border-[#5D614E] focus:outline-hidden"
-                  />
-                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
           {/* Action Buttons */}
-          <div className="pt-3 border-t border-[#D9D4C7] flex items-center justify-end gap-2.5">
+          <div className="pt-2 flex items-center gap-3">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2.5 rounded-xl bg-[#EAE6DC] hover:bg-[#D9D4C7] text-xs font-medium text-[#2D2D2A] transition"
+              className="flex-1 py-2.5 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-xs font-semibold transition"
             >
               Cancel
             </button>
             <button
-              id="save-album-submit-btn"
               type="submit"
               disabled={saving}
-              className="px-5 py-2.5 rounded-xl bg-[#5D614E] hover:bg-[#4E5240] active:scale-98 text-xs font-medium text-[#FAF8F5] transition disabled:opacity-50 shadow-xs"
+              className="flex-1 py-2.5 rounded-xl bg-[#FF5A10] hover:bg-[#FF6F28] active:scale-98 text-white text-xs font-semibold shadow-xs transition disabled:opacity-50"
             >
-              {saving ? 'Saving...' : isEditing ? 'Update Record' : 'Save to Registry'}
+              {saving ? 'Saving...' : isEditing ? 'Update Album' : 'Save to Library'}
             </button>
           </div>
         </form>

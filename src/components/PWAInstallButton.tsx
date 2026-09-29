@@ -17,10 +17,10 @@ export const PWAInstallButton: React.FC = () => {
       <button
         id="pwa-install-btn"
         onClick={install}
-        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full bg-[#EAE6DC] text-[#474A3D] border border-[#D9D4C7] hover:bg-[#D8DCCB] active:scale-95 transition-all shadow-xs"
+        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-full bg-white/[0.08] hover:bg-white/[0.14] text-white active:scale-95 transition-all cursor-pointer"
         title="Install as Progressive Web App"
       >
-        <Download className="w-3.5 h-3.5" />
+        <Download className="w-3.5 h-3.5 stroke-[2]" />
         <span>Install App</span>
       </button>
     );
@@ -33,58 +33,60 @@ export const PWAInstallButton: React.FC = () => {
         <button
           id="pwa-ios-guide-btn"
           onClick={() => setShowIOSGuide(true)}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full bg-[#EAE6DC] text-[#474A3D] border border-[#D9D4C7] hover:bg-[#D8DCCB] active:scale-95 transition-all"
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-full bg-white/[0.08] hover:bg-white/[0.14] text-white active:scale-95 transition-all cursor-pointer"
           title="Install on iPhone / iPad"
         >
-          <Share className="w-3.5 h-3.5" />
+          <Share className="w-3.5 h-3.5 stroke-[2]" />
           <span>Add to Home</span>
         </button>
 
         {showIOSGuide && (
-          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-[#2D2D2A]/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
-            <div className="w-full max-w-sm rounded-2xl bg-[#FCFAF6] border border-[#D9D4C7] p-5 text-[#2D2D2A] shadow-2xl">
-              <div className="flex items-center justify-between pb-3 border-b border-[#D9D4C7]">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-[#EFECE4] border border-[#D9D4C7] flex items-center justify-center text-[#5D614E]">
-                    <Share className="w-4 h-4" />
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-in fade-in duration-200">
+            <div className="w-full max-w-sm rounded-[28px] bg-[#16161A] border border-white/10 p-6 text-white shadow-2xl">
+              <div className="w-10 h-1.5 rounded-full bg-white/20 mx-auto -mt-2 mb-3" />
+
+              <div className="flex items-center justify-between pb-3 border-b border-white/[0.08]">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-[#FF5A10]/15 flex items-center justify-center text-[#FF5A10]">
+                    <Share className="w-4 h-4 stroke-[2.2]" />
                   </div>
                   <div>
-                    <h3 className="font-serif text-sm font-semibold text-[#2D2D2A]">Add to Home Screen</h3>
-                    <p className="text-xs text-[#726E65]">Install for offline collection access</p>
+                    <h3 className="text-sm font-bold text-white">Add to Home Screen</h3>
+                    <p className="text-xs text-[#8E8E93]">Install for offline collection access</p>
                   </div>
                 </div>
                 <button
                   onClick={() => setShowIOSGuide(false)}
-                  className="p-1.5 text-[#726E65] hover:text-[#2D2D2A] rounded-full hover:bg-[#EAE6DC]"
+                  className="w-7 h-7 rounded-full bg-white/[0.08] hover:bg-white/[0.14] flex items-center justify-center text-neutral-400 hover:text-white transition cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <div className="mt-4 space-y-3 text-xs text-[#3F3F3B]">
-                <div className="flex items-start gap-3 p-2.5 rounded-xl bg-[#EFECE4] border border-[#D9D4C7]">
-                  <span className="flex-shrink-0 w-5 h-5 rounded-full bg-[#5D614E] text-[#FAF8F5] font-semibold flex items-center justify-center text-xs">
+              <div className="mt-4 space-y-2.5 text-xs text-neutral-300">
+                <div className="flex items-start gap-3 p-3 rounded-2xl bg-white/[0.04]">
+                  <span className="flex-shrink-0 w-5 h-5 rounded-full bg-white text-black font-bold flex items-center justify-center text-xs">
                     1
                   </span>
-                  <span>Tap the <strong>Share</strong> icon in Safari’s bottom bar.</span>
+                  <span>Tap the <strong>Share</strong> button in Safari’s navigation bar.</span>
                 </div>
-                <div className="flex items-start gap-3 p-2.5 rounded-xl bg-[#EFECE4] border border-[#D9D4C7]">
-                  <span className="flex-shrink-0 w-5 h-5 rounded-full bg-[#5D614E] text-[#FAF8F5] font-semibold flex items-center justify-center text-xs">
+                <div className="flex items-start gap-3 p-3 rounded-2xl bg-white/[0.04]">
+                  <span className="flex-shrink-0 w-5 h-5 rounded-full bg-white text-black font-bold flex items-center justify-center text-xs">
                     2
                   </span>
-                  <span>Scroll down and select <strong>Add to Home Screen</strong>.</span>
+                  <span>Scroll down and tap <strong>Add to Home Screen</strong>.</span>
                 </div>
-                <div className="flex items-start gap-3 p-2.5 rounded-xl bg-[#EFECE4] border border-[#D9D4C7]">
-                  <span className="flex-shrink-0 w-5 h-5 rounded-full bg-[#5D614E] text-[#FAF8F5] font-semibold flex items-center justify-center text-xs">
+                <div className="flex items-start gap-3 p-3 rounded-2xl bg-white/[0.04]">
+                  <span className="flex-shrink-0 w-5 h-5 rounded-full bg-white text-black font-bold flex items-center justify-center text-xs">
                     3
                   </span>
-                  <span>Tap <strong>Add</strong> in the upper right. The app will launch in standalone offline mode.</span>
+                  <span>Tap <strong>Add</strong> in the top-right corner to install Groove.</span>
                 </div>
               </div>
 
               <button
                 onClick={() => setShowIOSGuide(false)}
-                className="mt-5 w-full py-2.5 rounded-xl bg-[#5D614E] hover:bg-[#4E5240] font-medium text-xs text-[#FAF8F5] transition active:scale-98"
+                className="mt-5 w-full py-2.5 rounded-full bg-[#FF5A10] hover:bg-[#FF6F28] font-semibold text-xs text-white transition active:scale-98 shadow-sm shadow-[#FF5A10]/30 cursor-pointer"
               >
                 Got It
               </button>

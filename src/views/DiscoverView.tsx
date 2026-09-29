@@ -2,14 +2,16 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Compass,
   Shuffle,
-  Sparkles,
   RefreshCw,
   PlusCircle,
   Eye,
   Radio,
   Clock,
-  Tag,
-  CheckCircle2,
+  Sparkles,
+  Music2,
+  Calendar,
+  Layers,
+  Flame,
 } from 'lucide-react';
 import { Album, ListenLog } from '../types';
 import { runDiscovery, DiscoveryMode, DiscoveryCandidate } from '../engines/discoveryEngine';
@@ -32,10 +34,8 @@ export const DiscoverView: React.FC<DiscoverViewProps> = ({
   const [mode, setMode] = useState<DiscoveryMode>('choose_for_me');
   const [candidates, setCandidates] = useState<DiscoveryCandidate[]>([]);
   const [selectedGenre, setSelectedGenre] = useState<string>('');
-  const [selectedStyle, setSelectedStyle] = useState<string>('');
   const [selectedDecade, setSelectedDecade] = useState<string>('');
 
-  // Available genres & decades
   const genres = useMemo(() => {
     const s = new Set<string>();
     albums.forEach((a) => a.genres?.forEach((g) => {
@@ -43,18 +43,6 @@ export const DiscoverView: React.FC<DiscoverViewProps> = ({
     }));
     return Array.from(s).sort();
   }, [albums]);
-
-  const styles = useMemo(() => {
-    const s = new Set<string>();
-    albums.forEach((a) => {
-      if (!selectedGenre || a.genres?.some((g) => g.toLowerCase() === selectedGenre.toLowerCase())) {
-        a.styles?.forEach((st) => {
-          if (st.trim()) s.add(st.trim());
-        });
-      }
-    });
-    return Array.from(s).sort();
-  }, [albums, selectedGenre]);
 
   const decades = useMemo(() => {
     const s = new Set<string>();
@@ -69,113 +57,128 @@ export const DiscoverView: React.FC<DiscoverViewProps> = ({
   const refreshCandidates = useCallback((targetMode: DiscoveryMode = mode) => {
     const results = runDiscovery(targetMode, albums, listenLogs, {
       genre: selectedGenre || undefined,
-      style: selectedStyle || undefined,
       decade: selectedDecade || undefined,
     });
     setCandidates(results);
-  }, [albums, listenLogs, mode, selectedGenre, selectedStyle, selectedDecade]);
+  }, [albums, listenLogs, mode, selectedGenre, selectedDecade]);
 
   useEffect(() => {
     refreshCandidates(mode);
-  }, [albums, listenLogs, mode, selectedGenre, selectedStyle, selectedDecade, refreshCandidates]);
+  }, [albums, listenLogs, mode, selectedGenre, selectedDecade, refreshCandidates]);
 
-  const modesConfig: { id: DiscoveryMode; label: string; icon: React.FC<{ className?: string }>; desc: string }[] = [
+  const modesConfig: {
+    id: DiscoveryMode;
+    label: string;
+    description: string;
+    icon: React.FC<{ className?: string }>;
+  }[] = [
     {
       id: 'choose_for_me',
-      label: 'Choose for Me',
+      label: 'Pick For Me',
+      description: 'Single thoughtful spotlight pick',
       icon: Compass,
-      desc: 'One thoughtful pick from your shelf',
     },
     {
       id: 'blind_pull',
       label: 'Blind Pull',
+      description: '3 random records from the crate',
       icon: Shuffle,
-      desc: 'A small group of random records',
     },
     {
       id: 'unplayed',
-      label: 'Unplayed',
+      label: 'Never Spun',
+      description: 'Albums waiting for first needle drop',
       icon: Radio,
-      desc: 'Records with zero logged listens',
+    },
+    {
+      id: 'forgotten',
+      label: 'Forgotten Gems',
+      description: 'Records not played in a long time',
+      icon: Clock,
+    },
+    {
+      id: 'top_rated',
+      label: 'Top Rated',
+      description: 'Your 4 & 5-star collection highlights',
+      icon: Sparkles,
     },
     {
       id: 'fresh_additions',
-      label: 'Fresh Additions',
-      icon: Sparkles,
-      desc: 'Recently added to your collection',
+      label: 'New to Crate',
+      description: 'Most recently cataloged acquisitions',
+      icon: Flame,
     },
     {
       id: 'genre',
-      label: 'Genre / Style',
-      icon: Tag,
-      desc: 'Filter by sound and style',
+      label: 'Genre Spotlight',
+      description: 'Explore by style and musical genre',
+      icon: Layers,
     },
     {
       id: 'decade',
-      label: 'Era / Decade',
-      icon: Clock,
-      desc: 'Filter by release decade',
+      label: 'Time Capsule',
+      description: 'Filter by original release era',
+      icon: Calendar,
     },
   ];
 
-  if (albums.length === 0) {
-    return (
-      <div id="discover-empty-collection" className="py-20 text-center space-y-3 rounded-2xl bg-white border border-dashed border-[#D9D4C7] p-8 shadow-xs">
-        <Compass className="w-12 h-12 text-[#8B8C7A] mx-auto" />
-        <h3 className="font-serif text-lg font-semibold text-[#2D2D2A]">No records in collection</h3>
-        <p className="text-xs text-[#726E65] max-w-sm mx-auto">
-          Discovery selects records from your registry. Add some records to get started!
-        </p>
-      </div>
-    );
-  }
-
   return (
     <div id="discover-view" className="space-y-6">
-      {/* Mode Selector Header */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Compass className="w-5 h-5 text-[#5D614E]" />
-            <h2 className="font-serif text-xl font-semibold text-[#2D2D2A] tracking-tight">Discover</h2>
-          </div>
+      {/* 1. iOS Inset Grouped Discovery Modes Grid (No awkward horizontal scrolling!) */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between px-1">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-[#8E8E93]">
+            Discovery Modes
+          </h2>
           <button
-            id="discover-choose-again-btn"
-            onClick={() => refreshCandidates()}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white border border-[#D9D4C7] hover:bg-[#EAE6DC] text-xs font-medium text-[#474A3D] active:scale-95 transition shadow-xs"
+            onClick={() => refreshCandidates(mode)}
+            className="text-xs font-semibold text-[#FF5A10] hover:text-[#FF7A00] flex items-center gap-1 cursor-pointer"
           >
-            <RefreshCw className="w-3.5 h-3.5 text-[#5D614E]" />
-            <span>Choose Again</span>
+            <RefreshCw className="w-3.5 h-3.5" />
+            <span>Reshuffle</span>
           </button>
         </div>
 
-        {/* Mode Buttons */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
-          {modesConfig.map((m) => {
-            const Icon = m.icon;
-            const isSelected = mode === m.id;
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+          {modesConfig.map((item) => {
+            const Icon = item.icon;
+            const isSelected = mode === item.id;
             return (
               <button
-                key={m.id}
-                id={`discover-mode-${m.id}`}
-                onClick={() => setMode(m.id)}
-                className={`p-3 rounded-2xl border text-left transition flex flex-col justify-between ${
+                key={item.id}
+                onClick={() => setMode(item.id)}
+                className={`p-3 rounded-2xl text-left transition-all cursor-pointer border flex flex-col justify-between ${
                   isSelected
-                    ? 'bg-[#EAE6DC] border-[#5D614E] text-[#2D2D2A] shadow-xs'
-                    : 'bg-white border-[#D9D4C7] text-[#726E65] hover:bg-[#FAF8F5] hover:text-[#2D2D2A]'
+                    ? 'bg-neutral-800 border-[#FF5A10] shadow-sm shadow-[#FF5A10]/20'
+                    : 'bg-neutral-900 border-white/[0.08] hover:bg-neutral-800/60 hover:border-white/20'
                 }`}
               >
-                <div className="flex items-center justify-between mb-1.5">
-                  <Icon className={`w-4 h-4 ${isSelected ? 'text-[#5D614E]' : 'text-[#8B8C7A]'}`} />
-                  {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-[#5D614E]" />}
+                <div className="flex items-center justify-between w-full mb-1.5">
+                  <div
+                    className={`w-7 h-7 rounded-xl flex items-center justify-center ${
+                      isSelected
+                        ? 'bg-[#FF5A10] text-white'
+                        : 'bg-white/[0.06] text-[#8E8E93]'
+                    }`}
+                  >
+                    <Icon className="w-4 h-4" />
+                  </div>
+                  {isSelected && (
+                    <span className="w-2 h-2 rounded-full bg-[#FF5A10] animate-pulse" />
+                  )}
                 </div>
+
                 <div>
-                  <span className={`text-xs font-semibold block ${isSelected ? 'text-[#474A3D]' : 'text-[#2D2D2A]'}`}>
-                    {m.label}
-                  </span>
-                  <span className="text-[10px] text-[#726E65] leading-tight block mt-0.5 line-clamp-1">
-                    {m.desc}
-                  </span>
+                  <h4
+                    className={`text-xs font-semibold truncate ${
+                      isSelected ? 'text-white' : 'text-neutral-200'
+                    }`}
+                  >
+                    {item.label}
+                  </h4>
+                  <p className="text-[10px] text-[#8E8E93] line-clamp-1 mt-0.5">
+                    {item.description}
+                  </p>
                 </div>
               </button>
             );
@@ -183,115 +186,48 @@ export const DiscoverView: React.FC<DiscoverViewProps> = ({
         </div>
       </div>
 
-      {/* Genre & Style Filter Sub-controls */}
-      {mode === 'genre' && (
-        <div className="p-4 rounded-2xl bg-white border border-[#D9D4C7] shadow-xs space-y-3.5 animate-in fade-in duration-150">
-          <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-xs font-medium text-[#2D2D2A]">Filter by Genre</span>
-              {(selectedGenre || selectedStyle) && (
-                <button
-                  onClick={() => {
-                    setSelectedGenre('');
-                    setSelectedStyle('');
-                  }}
-                  className="text-[11px] text-[#5D614E] hover:underline"
-                >
-                  Clear all filters
-                </button>
-              )}
-            </div>
-            <div className="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto">
+      {/* 2. Mode-Specific Controls (Genre or Decade Selectors) */}
+      {mode === 'genre' && genres.length > 0 && (
+        <div className="bg-neutral-900 border border-white/[0.08] rounded-2xl p-3.5 space-y-2 shadow-xs">
+          <span className="text-xs font-semibold text-[#8E8E93]">Select Genre</span>
+          <div className="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto">
+            <button
+              onClick={() => setSelectedGenre('')}
+              className={`px-3 py-1 rounded-full text-xs font-medium transition cursor-pointer ${
+                selectedGenre === ''
+                  ? 'bg-[#FF5A10] text-white shadow-xs'
+                  : 'bg-white/[0.06] text-neutral-300 hover:bg-white/[0.1]'
+              }`}
+            >
+              All Genres
+            </button>
+            {genres.map((g) => (
               <button
-                onClick={() => setSelectedGenre('')}
-                className={`px-2.5 py-1 rounded-xl text-xs font-medium transition ${
-                  selectedGenre === ''
-                    ? 'bg-[#5D614E] text-[#FAF8F5] border border-[#4E5240]'
-                    : 'bg-[#FCFAF6] text-[#555846] border border-[#D9D4C7] hover:bg-[#FAF8F5]'
+                key={g}
+                onClick={() => setSelectedGenre(selectedGenre === g ? '' : g)}
+                className={`px-3 py-1 rounded-full text-xs font-medium transition cursor-pointer ${
+                  selectedGenre === g
+                    ? 'bg-[#FF5A10] text-white shadow-xs'
+                    : 'bg-white/[0.06] text-neutral-300 hover:bg-white/[0.1]'
                 }`}
               >
-                All Genres
+                {g}
               </button>
-              {genres.map((g) => (
-                <button
-                  key={g}
-                  onClick={() => setSelectedGenre(selectedGenre === g ? '' : g)}
-                  className={`px-2.5 py-1 rounded-xl text-xs font-medium transition ${
-                    selectedGenre === g
-                      ? 'bg-[#5D614E] text-[#FAF8F5] border border-[#4E5240]'
-                      : 'bg-[#FCFAF6] text-[#555846] border border-[#D9D4C7] hover:bg-[#FAF8F5]'
-                  }`}
-                >
-                  {g}
-                </button>
-              ))}
-            </div>
+            ))}
           </div>
-
-          {styles.length > 0 && (
-            <div className="pt-2 border-t border-[#EFECE4]">
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-xs font-medium text-[#2D2D2A]">Filter by Style</span>
-                {selectedStyle && (
-                  <button
-                    onClick={() => setSelectedStyle('')}
-                    className="text-[11px] text-[#5D614E] hover:underline"
-                  >
-                    Clear style
-                  </button>
-                )}
-              </div>
-              <div className="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto">
-                <button
-                  onClick={() => setSelectedStyle('')}
-                  className={`px-2.5 py-1 rounded-xl text-xs font-medium transition ${
-                    selectedStyle === ''
-                      ? 'bg-[#5D614E] text-[#FAF8F5] border border-[#4E5240]'
-                      : 'bg-[#FCFAF6] text-[#555846] border border-[#D9D4C7] hover:bg-[#FAF8F5]'
-                  }`}
-                >
-                  All Styles
-                </button>
-                {styles.map((s) => (
-                  <button
-                    key={s}
-                    onClick={() => setSelectedStyle(selectedStyle === s ? '' : s)}
-                    className={`px-2.5 py-1 rounded-xl text-xs font-medium transition ${
-                      selectedStyle === s
-                        ? 'bg-[#5D614E] text-[#FAF8F5] border border-[#4E5240]'
-                        : 'bg-[#FCFAF6] text-[#555846] border border-[#D9D4C7] hover:bg-[#FAF8F5]'
-                    }`}
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       )}
 
-      {/* Era / Decade Filter Sub-controls */}
-      {mode === 'decade' && (
-        <div className="p-4 rounded-2xl bg-white border border-[#D9D4C7] shadow-xs space-y-2 animate-in fade-in duration-150">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-[#2D2D2A]">Select Release Era</span>
-            {selectedDecade && (
-              <button
-                onClick={() => setSelectedDecade('')}
-                className="text-[11px] text-[#5D614E] hover:underline"
-              >
-                Clear filter
-              </button>
-            )}
-          </div>
+      {mode === 'decade' && decades.length > 0 && (
+        <div className="bg-neutral-900 border border-white/[0.08] rounded-2xl p-3.5 space-y-2 shadow-xs">
+          <span className="text-xs font-semibold text-[#8E8E93]">Select Era</span>
           <div className="flex flex-wrap gap-1.5">
             <button
               onClick={() => setSelectedDecade('')}
-              className={`px-2.5 py-1 rounded-xl text-xs font-medium transition ${
+              className={`px-3 py-1 rounded-full text-xs font-medium transition cursor-pointer ${
                 selectedDecade === ''
-                  ? 'bg-[#5D614E] text-[#FAF8F5] border border-[#4E5240]'
-                  : 'bg-[#FCFAF6] text-[#555846] border border-[#D9D4C7] hover:bg-[#FAF8F5]'
+                  ? 'bg-[#FF5A10] text-white shadow-xs'
+                  : 'bg-white/[0.06] text-neutral-300 hover:bg-white/[0.1]'
               }`}
             >
               All Eras
@@ -300,10 +236,10 @@ export const DiscoverView: React.FC<DiscoverViewProps> = ({
               <button
                 key={d}
                 onClick={() => setSelectedDecade(selectedDecade === d ? '' : d)}
-                className={`px-2.5 py-1 rounded-xl text-xs font-medium transition ${
+                className={`px-3 py-1 rounded-full text-xs font-medium transition cursor-pointer ${
                   selectedDecade === d
-                    ? 'bg-[#5D614E] text-[#FAF8F5] border border-[#4E5240]'
-                    : 'bg-[#FCFAF6] text-[#555846] border border-[#D9D4C7] hover:bg-[#FAF8F5]'
+                    ? 'bg-[#FF5A10] text-white shadow-xs'
+                    : 'bg-white/[0.06] text-neutral-300 hover:bg-white/[0.1]'
                 }`}
               >
                 {d}
@@ -313,202 +249,106 @@ export const DiscoverView: React.FC<DiscoverViewProps> = ({
         </div>
       )}
 
-      {/* Empty States Handling */}
-      {candidates.length === 0 && (
-        <div className="py-12 px-6 rounded-3xl bg-white border border-[#D9D4C7] text-center space-y-3 shadow-xs">
-          {mode === 'unplayed' ? (
-            <>
-              <CheckCircle2 className="w-10 h-10 text-[#5D614E] mx-auto" />
-              <h3 className="font-serif text-lg font-semibold text-[#2D2D2A]">Every record has been spun!</h3>
-              <p className="text-xs text-[#726E65] max-w-md mx-auto">
-                You have logged listens for all records in your collection. Ready for another spin?
-              </p>
-              <div className="pt-2 flex justify-center gap-2">
-                <button
-                  onClick={() => setMode('choose_for_me')}
-                  className="px-4 py-2 rounded-xl bg-[#5D614E] text-[#FAF8F5] text-xs font-medium transition hover:bg-[#4E5240]"
-                >
-                  Choose for Me
-                </button>
-                <button
-                  onClick={() => setMode('blind_pull')}
-                  className="px-4 py-2 rounded-xl bg-[#EAE6DC] text-[#2D2D2A] text-xs font-medium border border-[#D9D4C7] transition hover:bg-[#D9D4C7]"
-                >
-                  Blind Pull
-                </button>
-              </div>
-            </>
-          ) : mode === 'genre' ? (
-            <>
-              <Tag className="w-10 h-10 text-[#8B8C7A] mx-auto" />
-              <h3 className="font-serif text-lg font-semibold text-[#2D2D2A]">No records found</h3>
-              <p className="text-xs text-[#726E65] max-w-md mx-auto">
-                No albums in your collection match the genre "{selectedGenre}".
-              </p>
-              <button
-                onClick={() => setSelectedGenre('')}
-                className="mt-2 px-4 py-2 rounded-xl bg-[#5D614E] text-[#FAF8F5] text-xs font-medium transition hover:bg-[#4E5240]"
-              >
-                Clear Genre Filter
-              </button>
-            </>
-          ) : mode === 'decade' ? (
-            <>
-              <Clock className="w-10 h-10 text-[#8B8C7A] mx-auto" />
-              <h3 className="font-serif text-lg font-semibold text-[#2D2D2A]">No records found</h3>
-              <p className="text-xs text-[#726E65] max-w-md mx-auto">
-                No albums in your collection were released in the {selectedDecade}.
-              </p>
-              <button
-                onClick={() => setSelectedDecade('')}
-                className="mt-2 px-4 py-2 rounded-xl bg-[#5D614E] text-[#FAF8F5] text-xs font-medium transition hover:bg-[#4E5240]"
-              >
-                Clear Era Filter
-              </button>
-            </>
-          ) : (
-            <>
-              <Compass className="w-10 h-10 text-[#8B8C7A] mx-auto" />
-              <h3 className="font-serif text-lg font-semibold text-[#2D2D2A]">No matches</h3>
-              <p className="text-xs text-[#726E65] max-w-md mx-auto">
-                No records currently match this mode.
-              </p>
-              <button
-                onClick={() => setMode('choose_for_me')}
-                className="mt-2 px-4 py-2 rounded-xl bg-[#5D614E] text-[#FAF8F5] text-xs font-medium transition hover:bg-[#4E5240]"
-              >
-                Reset to Choose for Me
-              </button>
-            </>
-          )}
+      {/* 3. Recommended Albums: iOS Inset Grouped Results */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between px-1">
+          <h3 className="text-base font-semibold text-white tracking-tight">
+            Curated Recommendations
+          </h3>
+          <span className="text-xs text-[#8E8E93]">
+            {candidates.length} {candidates.length === 1 ? 'record' : 'records'}
+          </span>
         </div>
-      )}
 
-      {/* Discovery Candidates Presentation */}
-      <div className="space-y-4">
-        {candidates.map(({ album, reason, playCount }, index) => {
-          const isFeatured = mode === 'choose_for_me';
-
-          return (
-            <div
-              key={`${album.id}-${index}`}
-              className="p-4 sm:p-6 rounded-3xl bg-white border border-[#D9D4C7] text-[#2D2D2A] shadow-xs hover:shadow-md transition-all"
-            >
-              {/* Reason & Status Badges */}
-              <div className="flex items-center justify-between gap-2 mb-4">
-                <span className="px-2.5 py-1 rounded-full text-[11px] font-medium bg-[#EAE6DC] text-[#474A3D] border border-[#D9D4C7] flex items-center gap-1.5">
-                  <Sparkles className="w-3 h-3 text-[#5D614E]" />
-                  <span>{reason}</span>
-                </span>
-                <span className={`text-[11px] font-mono px-2 py-0.5 rounded-full border ${
-                  playCount > 0
-                    ? 'bg-[#FCFAF6] text-[#474A3D] border-[#D9D4C7]'
-                    : 'bg-[#FAF8F5] text-[#8B8C7A] border-[#E8E4D8]'
-                }`}>
-                  {playCount > 0 ? `Spun ${playCount}×` : 'Unplayed'}
-                </span>
-              </div>
-
-              {/* Main Content */}
-              <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5">
-                <div
-                  className="cursor-pointer group flex-shrink-0"
-                  onClick={() => onSelectAlbum(album)}
-                >
-                  <VinylArtwork
-                    album={album}
-                    size={isFeatured ? 'xl' : 'lg'}
-                    showDiscPeek
-                  />
-                </div>
-
-                <div className="flex-1 text-center sm:text-left min-w-0 w-full space-y-2">
-                  <div>
-                    <h3
-                      onClick={() => onSelectAlbum(album)}
-                      className="font-serif text-xl sm:text-2xl font-semibold text-[#2D2D2A] hover:text-[#5D614E] cursor-pointer transition-colors leading-tight"
-                    >
-                      {album.title}
-                    </h3>
-                    <p className="text-base text-[#726E65] font-normal mt-0.5">{album.artist}</p>
+        {candidates.length === 0 ? (
+          <div className="bg-neutral-900 border border-white/[0.08] rounded-2xl p-12 text-center space-y-3">
+            <Music2 className="w-10 h-10 text-[#FF5A10] mx-auto stroke-[1.8]" />
+            <h4 className="text-base font-semibold text-white">No records matching this mode</h4>
+            <p className="text-xs text-[#8E8E93] max-w-sm mx-auto">
+              {mode === 'unplayed'
+                ? '🎉 Amazing! You have spun every single record in your collection.'
+                : 'Try switching to another mode or resetting your active filters.'}
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {candidates.map((cand) => (
+              <div
+                key={cand.album.id}
+                className="bg-neutral-900 border border-white/[0.08] rounded-2xl p-4 shadow-xs hover:border-white/20 transition-all"
+              >
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                  {/* Clean Album Artwork Square */}
+                  <div
+                    onClick={() => onSelectAlbum(cand.album)}
+                    className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl overflow-hidden shadow-sm border border-white/[0.08] flex-shrink-0 cursor-pointer active:scale-95 transition-transform bg-neutral-950"
+                  >
+                    <VinylArtwork album={cand.album} size="md" />
                   </div>
 
-                  {/* Metadata Chips */}
-                  <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 text-xs text-[#555846] font-mono pt-1">
-                    {album.releaseYear && (
-                      <span className="px-2 py-0.5 rounded bg-[#F4F1EA] border border-[#D9D4C7]">
-                        {album.releaseYear}
-                      </span>
-                    )}
-                    {album.format && (
-                      <span className="px-2 py-0.5 rounded bg-[#F4F1EA] border border-[#D9D4C7]">
-                        {album.format}
-                      </span>
-                    )}
-                    {album.edition && (
-                      <span className="px-2 py-0.5 rounded bg-[#EAE6DC] text-[#474A3D] border border-[#D9D4C7]">
-                        {album.edition}
-                      </span>
-                    )}
-                    {album.variant && (
-                      <span className="px-2 py-0.5 rounded bg-[#F4F1EA] border border-[#D9D4C7]">
-                        {album.variant}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Genre & Style Classification */}
-                  {((album.genres && album.genres.length > 0) || (album.styles && album.styles.length > 0)) && (
-                    <div className="flex flex-wrap items-center justify-center sm:justify-start gap-1 text-[11px] pt-0.5">
-                      {album.genres?.map((g) => (
-                        <span key={g} className="px-2 py-0.5 rounded-full bg-[#EAE6DC] text-[#474A3D] font-medium">
-                          {g}
+                  {/* Album Info */}
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <div className="flex items-center gap-2">
+                      <h4
+                        onClick={() => onSelectAlbum(cand.album)}
+                        className="text-base font-semibold text-white hover:text-[#FF5A10] cursor-pointer transition-colors truncate"
+                      >
+                        {cand.album.title}
+                      </h4>
+                      {cand.album.edition && (
+                        <span className="hidden sm:inline-block px-2 py-0.5 rounded-md text-[10px] font-medium bg-[#FF5A10]/15 text-[#FF5A10]">
+                          {cand.album.edition}
                         </span>
-                      ))}
-                      {album.styles?.map((s) => (
-                        <span key={s} className="px-2 py-0.5 rounded-full bg-[#FAF8F5] text-[#726E65] border border-[#E0DCD1]">
-                          {s}
-                        </span>
-                      ))}
+                      )}
                     </div>
-                  )}
 
-                  {album.personalRating !== undefined && album.personalRating > 0 && (
-                    <div className="pt-1 flex justify-center sm:justify-start">
-                      <RatingStars value={album.personalRating} size="sm" showLabel />
-                    </div>
-                  )}
-
-                  {album.notes && (
-                    <p className="text-xs text-[#726E65] italic line-clamp-2 pt-1">
-                      "{album.notes}"
+                    <p className="text-xs text-[#8E8E93] font-normal truncate">
+                      {cand.album.artist}
+                      {cand.album.releaseYear ? ` · ${cand.album.releaseYear}` : ''}
+                      {cand.album.format ? ` · ${cand.album.format}` : ''}
                     </p>
-                  )}
 
-                  {/* Actions */}
-                  <div className="pt-3 flex flex-wrap items-center justify-center sm:justify-start gap-2.5">
+                    <div className="flex items-center gap-3 pt-0.5 text-xs text-[#8E8E93]">
+                      {cand.album.personalRating !== undefined && cand.album.personalRating > 0 && (
+                        <RatingStars value={cand.album.personalRating} size="sm" />
+                      )}
+                      <span>
+                        {cand.playCount > 0 ? `${cand.playCount} spins` : 'Unplayed'}
+                      </span>
+                      {cand.lastPlayed && (
+                        <span>· Last spun {new Date(cand.lastPlayed).toLocaleDateString()}</span>
+                      )}
+                    </div>
+
+                    {cand.reason && (
+                      <p className="text-[11px] text-amber-300/80 pt-0.5 font-medium">
+                        💡 {cand.reason}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex sm:flex-col items-center gap-2 w-full sm:w-auto pt-2 sm:pt-0">
                     <button
-                      id={`discover-log-listen-btn-${album.id}`}
-                      onClick={() => onLogListen(album)}
-                      className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#5D614E] hover:bg-[#4E5240] active:scale-98 text-[#FAF8F5] text-xs font-medium transition shadow-xs"
+                      onClick={() => onLogListen(cand.album)}
+                      className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#FF5A10] hover:bg-[#FF6F28] active:scale-95 text-white text-xs font-semibold shadow-xs transition cursor-pointer"
                     >
                       <PlusCircle className="w-3.5 h-3.5" />
-                      <span>Log Listen</span>
+                      <span>Log Spin</span>
                     </button>
                     <button
-                      id={`discover-view-details-btn-${album.id}`}
-                      onClick={() => onSelectAlbum(album)}
-                      className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#EAE6DC] hover:bg-[#D9D4C7] text-[#2D2D2A] text-xs font-medium border border-[#D9D4C7] transition"
+                      onClick={() => onSelectAlbum(cand.album)}
+                      className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-xs font-semibold border border-white/10 transition cursor-pointer"
                     >
                       <Eye className="w-3.5 h-3.5" />
-                      <span>View Details</span>
+                      <span>Details</span>
                     </button>
                   </div>
                 </div>
               </div>
-            </div>
-          );
-        })}
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

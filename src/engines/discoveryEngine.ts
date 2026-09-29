@@ -4,6 +4,8 @@ export type DiscoveryMode =
   | 'choose_for_me'
   | 'blind_pull'
   | 'unplayed'
+  | 'forgotten'
+  | 'top_rated'
   | 'fresh_additions'
   | 'genre'
   | 'decade'
@@ -81,11 +83,44 @@ export function runDiscovery(
         (a) => (albumPlayCounts.get(a.id)?.count || 0) === 0
       );
       if (unplayedAlbums.length === 0) {
-        // Return empty so the UI can explicitly show the "All records have been played" empty state
         return [];
       }
       const picked = pickRandomItems(unplayedAlbums, Math.min(3, unplayedAlbums.length));
-      return picked.map((album) => getCandidate(album, 'Unplayed record'));
+      return picked.map((album) => getCandidate(album, 'Unplayed record in your collection'));
+    }
+
+    case 'forgotten': {
+      // Records played long ago or with low play count
+      const playedAlbums = albums.filter(
+        (a) => (albumPlayCounts.get(a.id)?.count || 0) > 0
+      );
+      if (playedAlbums.length === 0) {
+        // Fallback to unplayed if no listens yet
+        const picked = pickRandomItems(albums, Math.min(3, albums.length));
+        return picked.map((album) => getCandidate(album, 'Waiting for its first spin'));
+      }
+
+      // Sort by lastPlayed ascending (oldest first)
+      const sortedByOldest = [...playedAlbums].sort((a, b) => {
+        const timeA = new Date(albumPlayCounts.get(a.id)?.lastPlayed || 0).getTime();
+        const timeB = new Date(albumPlayCounts.get(b.id)?.lastPlayed || 0).getTime();
+        return timeA - timeB;
+      });
+
+      const picked = pickRandomItems(sortedByOldest.slice(0, Math.min(6, sortedByOldest.length)), Math.min(3, sortedByOldest.length));
+      return picked.map((album) => getCandidate(album, 'Has not been spun in a long time'));
+    }
+
+    case 'top_rated': {
+      const top = albums.filter((a) => a.personalRating && a.personalRating >= 4);
+      const pool = top.length > 0 ? top : albums;
+      const picked = pickRandomItems(pool, Math.min(3, pool.length));
+      return picked.map((album) =>
+        getCandidate(
+          album,
+          album.personalRating ? `★ Rated ${album.personalRating}/5 stars` : 'Curated collection highlight'
+        )
+      );
     }
 
     case 'fresh_additions': {
@@ -95,7 +130,7 @@ export function runDiscovery(
       );
       const recentPool = sortedByAdded.slice(0, Math.min(10, albums.length));
       const picked = pickRandomItems(recentPool, Math.min(3, recentPool.length));
-      return picked.map((album) => getCandidate(album, 'Recently added to collection'));
+      return picked.map((album) => getCandidate(album, 'Recently cataloged in crate'));
     }
 
     case 'genre': {
@@ -119,14 +154,11 @@ export function runDiscovery(
       }
 
       if (options?.genre || options?.style) {
-        if (pool.length === 0) {
-          return []; // Return empty for no-match empty state
-        }
+        if (pool.length === 0) return [];
         const picked = pickRandomItems(pool, Math.min(3, pool.length));
         return picked.map((album) => getCandidate(album, reasons.join(' · ')));
       }
 
-      // No specific genre/style filter selected: sample albums with genres or styles
       const withClassification = albums.filter(
         (a) => (a.genres && a.genres.length > 0) || (a.styles && a.styles.length > 0)
       );
@@ -153,14 +185,11 @@ export function runDiscovery(
           const decadeStr = `${Math.floor(a.releaseYear / 10) * 10}s`;
           return decadeStr === target;
         });
-        if (pool.length === 0) {
-          return []; // Return empty for no-match empty state
-        }
+        if (pool.length === 0) return [];
         const picked = pickRandomItems(pool, Math.min(3, pool.length));
         return picked.map((album) => getCandidate(album, `Released in the ${options.decade}`));
       }
 
-      // No specific decade selected: sample albums with release years
       const withYears = albums.filter((a) => a.releaseYear);
       const samplePool = withYears.length > 0 ? withYears : albums;
       const picked = pickRandomItems(samplePool, Math.min(3, samplePool.length));
@@ -173,7 +202,6 @@ export function runDiscovery(
     }
 
     case 'genre_era': {
-      // Combined legacy mode fallback
       let filtered = [...albums];
       const reasons: string[] = [];
 
@@ -201,8 +229,6 @@ export function runDiscovery(
 
     case 'choose_for_me':
     default: {
-      // Select 1 appropriate record from the collection
-      // Works perfectly when listenLogs.length === 0
       const unplayed = albums.filter((a) => (albumPlayCounts.get(a.id)?.count || 0) === 0);
       let chosenAlbum: Album;
       let reason: string;

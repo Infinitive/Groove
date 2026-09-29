@@ -9,10 +9,10 @@ import {
   AlertTriangle,
   HardDrive,
   CheckCircle2,
-  Bookmark,
 } from 'lucide-react';
 
 interface SettingsModalProps {
+  isOpen?: boolean;
   onClose: () => void;
   onExportJSON: () => Promise<string>;
   onImportJSON: (
@@ -20,9 +20,12 @@ interface SettingsModalProps {
     mode: 'replace' | 'merge'
   ) => Promise<{ importedAlbums?: number; importedLogs?: number; importedWishlist?: number; albums?: number; logs?: number }>;
   onExportCSV: (type: 'library' | 'listens' | 'wishlist') => string;
-  onResetToCatalogue: () => Promise<void>;
-  collectionCount: number;
-  listenCount: number;
+  onResetCatalogue?: () => Promise<void>;
+  onResetToCatalogue?: () => Promise<void>;
+  albumCount?: number;
+  collectionCount?: number;
+  listenLogCount?: number;
+  listenCount?: number;
   wishlistCount?: number;
 }
 
@@ -31,18 +34,24 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onExportJSON,
   onImportJSON,
   onExportCSV,
+  onResetCatalogue,
   onResetToCatalogue,
-  collectionCount,
-  listenCount,
+  albumCount,
+  collectionCount = 0,
+  listenLogCount,
+  listenCount = 0,
   wishlistCount = 0,
 }) => {
+  const totalAlbums = albumCount ?? collectionCount;
+  const totalListens = listenLogCount ?? listenCount;
+  const resetHandler = onResetCatalogue || onResetToCatalogue;
+
   const [importMode, setImportMode] = useState<'replace' | 'merge'>('replace');
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [processing, setProcessing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Handle Escape key
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -74,8 +83,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       setProcessing(true);
       const json = await onExportJSON();
       const date = new Date().toISOString().substring(0, 10);
-      downloadFile(json, `vinyl-registry-backup-${date}.json`, 'application/json');
-      setStatusMessage({ type: 'success', text: 'Full canonical JSON backup downloaded.' });
+      downloadFile(json, `groove-backup-${date}.json`, 'application/json');
+      setStatusMessage({ type: 'success', text: 'Full JSON archive downloaded.' });
     } catch {
       setStatusMessage({ type: 'error', text: 'Failed to export backup.' });
     } finally {
@@ -87,59 +96,39 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     try {
       const csv = onExportCSV(type);
       const date = new Date().toISOString().substring(0, 10);
-      const typeLabel =
-        type === 'library' ? 'records' : type === 'listens' ? 'listening-history' : 'wishlist';
-      downloadFile(csv, `vinyl-${typeLabel}-${date}.csv`, 'text/csv;charset=utf-8;');
-      setStatusMessage({
-        type: 'success',
-        text: `${type === 'library' ? 'Library records' : type === 'listens' ? 'Listening history' : 'Wishlist'} exported as CSV.`,
-      });
+      downloadFile(csv, `groove-${type}-${date}.csv`, 'text/csv');
+      setStatusMessage({ type: 'success', text: `Exported ${type} spreadsheet CSV.` });
     } catch {
       setStatusMessage({ type: 'error', text: 'Failed to export CSV.' });
     }
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    try {
-      setProcessing(true);
-      setStatusMessage(null);
-      const text = await file.text();
-      const res = await onImportJSON(text, importMode);
-      const albCount = res.importedAlbums ?? res.albums ?? 0;
-      const logCount = res.importedLogs ?? res.logs ?? 0;
-      const wishCount = res.importedWishlist ?? 0;
-      setStatusMessage({
-        type: 'success',
-        text: `Validation successful! Restored ${albCount} records, ${logCount} listening logs, and ${wishCount} wishlist items (${importMode} mode).`,
-      });
-    } catch (err) {
-      setStatusMessage({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Invalid backup file or validation failed.',
-      });
-    } finally {
-      setProcessing(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
-    }
-  };
-
-  const handleReset = async () => {
-    try {
-      setProcessing(true);
-      await onResetToCatalogue();
-      setShowResetConfirm(false);
-      setStatusMessage({
-        type: 'success',
-        text: 'Reset collection to initial 72 records.',
-      });
-    } catch {
-      setStatusMessage({ type: 'error', text: 'Failed to reset collection' });
-    } finally {
-      setProcessing(false);
-    }
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      try {
+        setProcessing(true);
+        const text = evt.target?.result as string;
+        const result = await onImportJSON(text, importMode);
+        const count = result.importedAlbums ?? result.albums ?? 0;
+        setStatusMessage({
+          type: 'success',
+          text: `Restored ${count} albums successfully.`,
+        });
+      } catch (err: any) {
+        setStatusMessage({
+          type: 'error',
+          text: err.message || 'Invalid backup file.',
+        });
+      } finally {
+        setProcessing(false);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+      }
+    };
+    reader.readAsText(file);
   };
 
   return (
@@ -148,145 +137,130 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
-      className="fixed inset-0 z-50 overflow-y-auto bg-[#2D2D2A]/60 backdrop-blur-sm flex items-center justify-center p-4"
+      className="fixed inset-0 z-60 bg-black/65 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fade-in"
     >
-      <div className="w-full max-w-xl rounded-3xl bg-[#F4F1EA] border border-[#D9D4C7] text-[#2D2D2A] shadow-2xl p-6 space-y-5 animate-in fade-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-[#D9D4C7]">
-          <div className="flex items-center gap-2">
-            <HardDrive className="w-5 h-5 text-[#5D614E]" />
-            <h3 className="font-serif text-base font-semibold text-[#2D2D2A]">
-              Data Portability & Settings
-            </h3>
-          </div>
+      <div
+        id="settings-sheet"
+        className="w-full sm:max-w-md max-h-[92vh] sm:max-h-[85vh] bg-neutral-900/95 backdrop-blur-2xl border-t sm:border border-white/10 rounded-t-[28px] sm:rounded-3xl flex flex-col shadow-2xl overflow-hidden animate-slide-up"
+      >
+        {/* iOS Grab Handle */}
+        <div className="pt-3 pb-1 flex justify-center flex-shrink-0 cursor-grab active:cursor-grabbing">
+          <div className="w-10 h-1.5 rounded-full bg-white/25" />
+        </div>
+
+        {/* Modal Header */}
+        <div className="px-5 py-2.5 flex items-center justify-between border-b border-white/[0.06] flex-shrink-0">
+          <h3 className="text-base font-bold text-white tracking-tight">Settings & Data</h3>
           <button
             onClick={onClose}
-            className="p-1.5 text-[#726E65] hover:text-[#2D2D2A] hover:bg-[#EAE6DC] rounded-full transition"
+            aria-label="Close"
+            className="w-7 h-7 rounded-full bg-white/[0.08] hover:bg-white/[0.15] text-neutral-300 hover:text-white flex items-center justify-center transition cursor-pointer"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Status Alert */}
-        {statusMessage && (
-          <div
-            className={`p-3 rounded-2xl text-xs flex items-start gap-2 leading-relaxed whitespace-pre-line ${
-              statusMessage.type === 'success'
-                ? 'bg-[#5D614E]/15 text-[#3D4132] border border-[#5D614E]/30'
-                : 'bg-[#8A5A53]/15 text-[#733F39] border border-[#8A5A53]/30'
-            }`}
-          >
-            {statusMessage.type === 'success' ? (
-              <CheckCircle2 className="w-4 h-4 flex-shrink-0 mt-0.5" />
-            ) : (
-              <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-            )}
-            <span className="flex-1">{statusMessage.text}</span>
-          </div>
-        )}
-
-        {/* Storage Health & Registry Overview */}
-        <div className="p-4 rounded-2xl bg-white border border-[#D9D4C7] flex items-center justify-between shadow-xs">
-          <div className="space-y-0.5">
-            <div className="flex items-center gap-1.5 text-xs font-medium text-[#2D2D2A]">
-              <ShieldCheck className="w-4 h-4 text-[#5D614E]" />
-              <span>Local Storage (IndexedDB)</span>
+        {/* Modal Body */}
+        <div className="p-5 overflow-y-auto space-y-4 flex-1">
+          {statusMessage && (
+            <div
+              className={`p-3 rounded-xl border text-xs flex items-center gap-2 ${
+                statusMessage.type === 'success'
+                  ? 'bg-emerald-950/40 border-emerald-500/20 text-emerald-200'
+                  : 'bg-red-950/40 border-red-500/20 text-red-200'
+              }`}
+            >
+              {statusMessage.type === 'success' ? (
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+              ) : (
+                <AlertTriangle className="w-4 h-4 text-red-400 flex-shrink-0" />
+              )}
+              <span>{statusMessage.text}</span>
             </div>
-            <p className="text-[11px] text-[#726E65]">
-              Private and persistent in your browser. 100% functional offline without servers.
-            </p>
-          </div>
-          <div className="text-right font-mono text-xs text-[#2D2D2A]">
-            <div className="font-semibold">{collectionCount} records</div>
-            <div className="text-[10px] text-[#726E65]">{listenCount} listens</div>
-            <div className="text-[10px] text-[#5D614E]">{wishlistCount} wishlist</div>
-          </div>
-        </div>
+          )}
 
-        {/* Backup & Portability */}
-        <div className="space-y-3">
-          <h4 className="text-xs font-mono uppercase tracking-wider text-[#726E65]">
-            Export & Portability
-          </h4>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {/* JSON Backup */}
-            <div className="p-3.5 rounded-2xl bg-white border border-[#D9D4C7] flex flex-col justify-between gap-3 shadow-xs">
-              <div>
-                <span className="text-xs font-semibold text-[#2D2D2A] block">Full JSON Backup</span>
-                <p className="text-[11px] text-[#726E65] mt-0.5">
-                  Authoritative, full-fidelity archive including all records, pressings, ratings, listening logs & wishlist.
-                </p>
+          {/* Storage Summary */}
+          <div className="bg-neutral-950/60 border border-white/[0.08] rounded-2xl p-4">
+            <div className="flex items-center gap-2.5 mb-2">
+              <HardDrive className="w-4 h-4 text-[#FF5A10]" />
+              <h4 className="text-xs font-semibold text-white uppercase tracking-wider">Local Storage</h4>
+            </div>
+            <div className="grid grid-cols-3 gap-2 text-center pt-1">
+              <div className="p-2 rounded-xl bg-neutral-900 border border-white/[0.06]">
+                <p className="text-base font-bold text-white">{totalAlbums}</p>
+                <p className="text-[10px] text-[#8E8E93]">Records</p>
               </div>
+              <div className="p-2 rounded-xl bg-neutral-900 border border-white/[0.06]">
+                <p className="text-base font-bold text-white">{totalListens}</p>
+                <p className="text-[10px] text-[#8E8E93]">Spins</p>
+              </div>
+              <div className="p-2 rounded-xl bg-neutral-900 border border-white/[0.06]">
+                <p className="text-base font-bold text-white">{wishlistCount}</p>
+                <p className="text-[10px] text-[#8E8E93]">Wishlist</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Backup & Export Group */}
+          <div className="space-y-2">
+            <h4 className="text-xs font-semibold text-[#8E8E93] uppercase tracking-wider px-1">
+              Backup & Export
+            </h4>
+            <div className="bg-neutral-950/60 border border-white/[0.08] rounded-2xl overflow-hidden divide-y divide-white/[0.06]">
               <button
-                id="export-json-backup-btn"
                 onClick={handleExportJSON}
                 disabled={processing}
-                className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-[#5D614E] hover:bg-[#4E5240] active:scale-98 text-xs font-medium text-[#FAF8F5] transition disabled:opacity-50 shadow-xs"
+                className="w-full p-3.5 flex items-center justify-between hover:bg-neutral-900 active:bg-neutral-800 transition text-left cursor-pointer"
               >
-                <Download className="w-3.5 h-3.5" />
-                <span>Export JSON Backup</span>
+                <div className="flex items-center gap-3">
+                  <Download className="w-4 h-4 text-[#FF5A10]" />
+                  <div>
+                    <p className="text-xs font-semibold text-white">Full JSON Backup</p>
+                    <p className="text-[10px] text-[#8E8E93]">Albums, spin logs & wishlist in JSON</p>
+                  </div>
+                </div>
+                <span className="text-xs text-[#FF5A10] font-medium">Export</span>
+              </button>
+
+              <button
+                onClick={() => handleExportCSV('library')}
+                className="w-full p-3.5 flex items-center justify-between hover:bg-neutral-900 active:bg-neutral-800 transition text-left cursor-pointer"
+              >
+                <div className="flex items-center gap-3">
+                  <FileSpreadsheet className="w-4 h-4 text-[#FF5A10]" />
+                  <div>
+                    <p className="text-xs font-semibold text-white">Library CSV Spreadsheet</p>
+                    <p className="text-[10px] text-[#8E8E93]">Open in Excel or Apple Numbers</p>
+                  </div>
+                </div>
+                <span className="text-xs text-[#FF5A10] font-medium">Export</span>
               </button>
             </div>
-
-            {/* CSV Interoperability Exports */}
-            <div className="p-3.5 rounded-2xl bg-white border border-[#D9D4C7] flex flex-col justify-between gap-3 shadow-xs">
-              <div>
-                <span className="text-xs font-semibold text-[#2D2D2A] block">Spreadsheet Export (CSV)</span>
-                <p className="text-[11px] text-[#726E65] mt-0.5">
-                  Universal CSV format for external analysis in Excel, Numbers, or spreadsheet archives.
-                </p>
-              </div>
-              <div className="grid grid-cols-3 gap-1.5">
-                <button
-                  onClick={() => handleExportCSV('library')}
-                  className="flex items-center justify-center gap-1 py-1.5 px-1 rounded-xl bg-[#EAE6DC] hover:bg-[#D9D4C7] text-[11px] font-medium text-[#2D2D2A] transition"
-                  title="Export collection albums to CSV"
-                >
-                  <FileSpreadsheet className="w-3 h-3 flex-shrink-0" />
-                  <span>Records</span>
-                </button>
-                <button
-                  onClick={() => handleExportCSV('listens')}
-                  className="flex items-center justify-center gap-1 py-1.5 px-1 rounded-xl bg-[#EAE6DC] hover:bg-[#D9D4C7] text-[11px] font-medium text-[#2D2D2A] transition"
-                  title="Export listening journal to CSV"
-                >
-                  <FileSpreadsheet className="w-3 h-3 flex-shrink-0" />
-                  <span>Listens</span>
-                </button>
-                <button
-                  onClick={() => handleExportCSV('wishlist')}
-                  className="flex items-center justify-center gap-1 py-1.5 px-1 rounded-xl bg-[#EAE6DC] hover:bg-[#D9D4C7] text-[11px] font-medium text-[#2D2D2A] transition"
-                  title="Export crate wishlist to CSV"
-                >
-                  <Bookmark className="w-3 h-3 flex-shrink-0" />
-                  <span>Wishlist</span>
-                </button>
-              </div>
-            </div>
           </div>
-        </div>
 
-        {/* Restore Backup with Validation */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h4 className="text-xs font-mono uppercase tracking-wider text-[#726E65]">
-              Restore Backup
+          {/* Restore / Import Group */}
+          <div className="space-y-2">
+            <h4 className="text-xs font-semibold text-[#8E8E93] uppercase tracking-wider px-1">
+              Restore / Import
             </h4>
-            <span className="text-[11px] text-[#5D614E] font-medium">Validated before import</span>
-          </div>
+            <div className="bg-neutral-950/60 border border-white/[0.08] rounded-2xl p-4 space-y-3">
+              <input
+                type="file"
+                ref={fileInputRef}
+                accept=".json"
+                onChange={handleFileUpload}
+                className="hidden"
+              />
 
-          <div className="p-4 rounded-2xl bg-white border border-[#D9D4C7] space-y-3.5 shadow-xs">
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-[#726E65] font-medium">Import Mode:</span>
-              <div className="flex gap-1 bg-[#F4F1EA] border border-[#D9D4C7] p-0.5 rounded-xl">
+              {/* iOS Segmented mode */}
+              <div className="bg-neutral-900 border border-white/[0.08] p-1 rounded-xl flex items-center gap-1">
                 <button
                   type="button"
                   onClick={() => setImportMode('replace')}
-                  className={`px-2.5 py-1 rounded-lg transition text-xs ${
+                  className={`flex-1 py-1 rounded-lg text-xs font-medium transition ${
                     importMode === 'replace'
-                      ? 'bg-[#5D614E] text-[#FAF8F5] font-medium shadow-xs'
-                      : 'text-[#726E65] hover:text-[#2D2D2A]'
+                      ? 'bg-[#2C2C2E] text-white shadow-xs font-semibold'
+                      : 'text-[#8E8E93]'
                   }`}
                 >
                   Replace All
@@ -294,95 +268,68 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setImportMode('merge')}
-                  className={`px-2.5 py-1 rounded-lg transition text-xs ${
+                  className={`flex-1 py-1 rounded-lg text-xs font-medium transition ${
                     importMode === 'merge'
-                      ? 'bg-[#5D614E] text-[#FAF8F5] font-medium shadow-xs'
-                      : 'text-[#726E65] hover:text-[#2D2D2A]'
+                      ? 'bg-[#2C2C2E] text-white shadow-xs font-semibold'
+                      : 'text-[#8E8E93]'
                   }`}
                 >
-                  Merge Non-duplicates
+                  Merge Existing
                 </button>
               </div>
-            </div>
 
-            <p className="text-[11px] text-[#726E65]">
-              {importMode === 'replace'
-                ? 'Replace mode will atomically clear the existing database and replace it with the verified backup archive.'
-                : 'Merge mode will keep existing records and add or update incoming entries from the backup file.'}
-            </p>
-
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".json"
-              onChange={handleFileChange}
-              className="hidden"
-            />
-
-            <button
-              id="import-json-backup-btn"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={processing}
-              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[#EAE6DC] hover:bg-[#D9D4C7] text-xs font-medium text-[#2D2D2A] transition active:scale-98"
-            >
-              <Upload className="w-4 h-4" />
-              <span>Select Valid JSON Backup to Restore</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Reset Collection */}
-        <div className="pt-2 border-t border-[#D9D4C7] flex items-center justify-between">
-          <div>
-            <span className="text-xs font-medium text-[#2D2D2A] block">Reset to Catalogue</span>
-            <span className="text-[11px] text-[#726E65]">Restore original 72 initial catalogue records</span>
-          </div>
-
-          <button
-            onClick={() => setShowResetConfirm(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-[#8A5A53]/10 text-[#8A5A53] border border-[#D9D4C7] hover:border-[#8A5A53]/40 text-xs transition"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-            <span>Reset Catalogue</span>
-          </button>
-        </div>
-
-        {/* Reset Confirmation */}
-        {showResetConfirm && (
-          <div
-            onClick={(e) => {
-              if (e.target === e.currentTarget) setShowResetConfirm(false);
-            }}
-            className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-[#2D2D2A]/60 backdrop-blur-xs"
-          >
-            <div className="w-full max-w-sm rounded-3xl bg-white border border-[#D9D4C7] text-[#2D2D2A] shadow-2xl p-6 space-y-4">
-              <div className="flex items-center gap-2 text-[#8A5A53]">
-                <AlertTriangle className="w-5 h-5" />
-                <h4 className="font-serif text-base font-semibold text-[#2D2D2A]">Reset to Initial Catalogue?</h4>
-              </div>
-
-              <p className="text-xs text-[#726E65] leading-relaxed">
-                This will re-seed your local database with the original 72 vinyl records from your catalogue, clearing custom additions, listening logs, and wishlist items.
-              </p>
-
-              <div className="flex justify-end gap-2 pt-2">
-                <button
-                  onClick={() => setShowResetConfirm(false)}
-                  className="px-3.5 py-2 rounded-xl bg-[#EAE6DC] text-xs text-[#2D2D2A] hover:bg-[#D9D4C7]"
-                >
-                  Cancel
-                </button>
-                <button
-                  id="confirm-reset-catalogue-btn"
-                  onClick={handleReset}
-                  className="px-4 py-2 rounded-xl bg-[#8A5A53] hover:bg-[#733F39] text-xs font-medium text-[#FAF8F5] shadow-xs"
-                >
-                  Confirm Reset
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={processing}
+                className="w-full py-2.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 active:scale-98 text-xs font-semibold text-white border border-white/10 flex items-center justify-center gap-2 transition cursor-pointer"
+              >
+                <Upload className="w-3.5 h-3.5 text-[#FF5A10]" />
+                <span>Select JSON Backup File</span>
+              </button>
             </div>
           </div>
-        )}
+
+          {/* Reset Database */}
+          {resetHandler && (
+            <div className="pt-2">
+              {!showResetConfirm ? (
+                <button
+                  type="button"
+                  onClick={() => setShowResetConfirm(true)}
+                  className="w-full py-2.5 rounded-xl bg-neutral-950/40 hover:bg-red-950/30 text-neutral-500 hover:text-red-400 border border-white/[0.06] text-xs font-medium transition cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>Reset to Sample Catalogue</span>
+                </button>
+              ) : (
+                <div className="p-3.5 bg-red-950/40 border border-red-500/20 rounded-2xl space-y-2">
+                  <p className="text-xs text-red-200 font-semibold text-center">
+                    Reset library to default curated catalogue?
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setShowResetConfirm(false)}
+                      className="flex-1 py-1.5 rounded-xl bg-neutral-800 text-xs font-semibold text-white"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={async () => {
+                        await resetHandler();
+                        setShowResetConfirm(false);
+                        onClose();
+                      }}
+                      className="flex-1 py-1.5 rounded-xl bg-red-600 hover:bg-red-500 text-xs font-semibold text-white"
+                    >
+                      Confirm Reset
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

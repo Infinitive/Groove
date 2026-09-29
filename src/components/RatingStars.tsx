@@ -41,15 +41,15 @@ export const RatingStars: React.FC<RatingStarsProps> = ({
                 <Star
                   className={`${starSizes[size]} ${
                     filled
-                      ? 'fill-[#C28B38] text-[#C28B38]'
+                      ? 'fill-[#FFB800] text-[#FFB800]'
                       : half
-                      ? 'text-[#C28B38]'
-                      : 'text-[#D9D4C7]'
+                      ? 'text-[#FFB800]'
+                      : 'text-white/20'
                   }`}
                 />
                 {half && (
                   <div className="absolute inset-0 overflow-hidden w-[50%] pointer-events-none">
-                    <Star className={`${starSizes[size]} fill-[#C28B38] text-[#C28B38]`} />
+                    <Star className={`${starSizes[size]} fill-[#FFB800] text-[#FFB800]`} />
                   </div>
                 )}
               </div>
@@ -58,20 +58,20 @@ export const RatingStars: React.FC<RatingStarsProps> = ({
 
           // Interactive mode with two click zones per star: left half (index - 0.5) and right half (index)
           return (
-            <div key={starIndex} className="relative group cursor-pointer">
+            <div key={starIndex} className="relative group cursor-pointer active:scale-90 transition-transform">
               <Star
                 aria-hidden="true"
                 className={`${starSizes[size]} transition-colors ${
                   filled
-                    ? 'fill-[#C28B38] text-[#C28B38]'
+                    ? 'fill-[#FFB800] text-[#FFB800]'
                     : half
-                    ? 'text-[#C28B38]'
-                    : 'text-[#D9D4C7] hover:text-[#8B8C7A]'
+                    ? 'text-[#FFB800]'
+                    : 'text-white/20 group-hover:text-white/40'
                 }`}
               />
               {half && (
                 <div className="absolute inset-0 overflow-hidden w-[50%] pointer-events-none" aria-hidden="true">
-                  <Star className={`${starSizes[size]} fill-[#C28B38] text-[#C28B38]`} />
+                  <Star className={`${starSizes[size]} fill-[#FFB800] text-[#FFB800]`} />
                 </div>
               )}
               {/* Left half clickable zone */}
@@ -102,7 +102,7 @@ export const RatingStars: React.FC<RatingStarsProps> = ({
       </div>
 
       {showLabel && (
-        <span className="text-xs font-mono font-medium text-[#726E65] ml-1">
+        <span className="text-xs font-semibold text-[#8E8E93] ml-1 tabular-nums">
           {currentVal > 0 ? currentVal.toFixed(1) : 'Unrated'}
         </span>
       )}

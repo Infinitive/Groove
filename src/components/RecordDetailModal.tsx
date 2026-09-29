@@ -9,11 +9,19 @@ import {
   Disc,
   Clock,
   FileText,
-  Database,
+  Sparkles,
+  Barcode,
+  Building,
+  Globe,
+  MapPin,
+  ExternalLink,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { Album, ListenLog } from '../types';
 import { VinylArtwork } from './VinylArtwork';
 import { RatingStars } from './RatingStars';
+import { triggerHaptic } from '../utils/haptics';
 
 interface RecordDetailModalProps {
   album: Album;
@@ -41,6 +49,7 @@ export const RecordDetailModal: React.FC<RecordDetailModalProps> = ({
   onUpdateRating,
 }) => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showPhysicalDetails, setShowPhysicalDetails] = useState(true);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -98,506 +107,439 @@ export const RecordDetailModal: React.FC<RecordDetailModalProps> = ({
     <div
       id="record-detail-backdrop"
       onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
+        if (e.target === e.currentTarget) {
+          triggerHaptic('light');
+          onClose();
+        }
       }}
-      className="fixed inset-0 z-50 overflow-y-auto bg-[#2D2D2A]/60 backdrop-blur-sm flex justify-center p-0 sm:p-4 md:p-6"
+      className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fade-in"
     >
+      {/* iOS Bottom Sheet Container with Native Spring Curve */}
       <div
-        id="record-detail-container"
-        className="w-full max-w-3xl min-h-screen sm:min-h-0 sm:my-auto rounded-none sm:rounded-3xl bg-[#F4F1EA] border-0 sm:border border-[#D9D4C7] text-[#2D2D2A] shadow-2xl flex flex-col overflow-hidden"
+        id="record-detail-sheet"
+        className="w-full sm:max-w-xl max-h-[92vh] sm:max-h-[85vh] bg-[#16161A]/98 backdrop-blur-2xl border-t sm:border border-white/10 rounded-t-[28px] sm:rounded-3xl flex flex-col shadow-2xl overflow-hidden animate-slide-up"
       >
-        {/* Sticky Mobile/Desktop Top Bar */}
-        <div className="sticky top-0 z-20 flex items-center justify-between px-4 sm:px-6 py-3.5 bg-[#F4F1EA]/95 backdrop-blur-md border-b border-[#D9D4C7]">
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="text-xs font-mono text-[#726E65] uppercase tracking-wider">Record Details</span>
-            {album.edition && (
-              <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-[#EAE6DC] text-[#474A3D] border border-[#D9D4C7] truncate max-w-[200px]">
-                {album.edition}
-              </span>
-            )}
+        {/* iOS Top Grab Handle */}
+        <div className="pt-3 pb-1 flex justify-center flex-shrink-0 cursor-grab active:cursor-grabbing">
+          <div className="w-10 h-1.5 rounded-full bg-white/20" />
+        </div>
+
+        {/* Modal Top Bar */}
+        <div className="px-5 py-2 flex items-center justify-between border-b border-white/[0.06] flex-shrink-0">
+          <span className="text-xs font-semibold uppercase tracking-wider text-[#8E8E93]">
+            Record Details
+          </span>
+          <button
+            onClick={() => {
+              triggerHaptic('light');
+              onClose();
+            }}
+            aria-label="Close"
+            className="w-7 h-7 rounded-full bg-white/[0.08] hover:bg-white/[0.15] active:scale-90 text-neutral-300 hover:text-white flex items-center justify-center transition cursor-pointer"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Scrollable Content */}
+        <div className="p-5 overflow-y-auto space-y-5">
+          {/* Header Artwork & Info */}
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 text-center sm:text-left">
+            <div className="w-32 h-32 sm:w-36 sm:h-36 flex-shrink-0 rounded-2xl overflow-hidden shadow-lg border border-white/10">
+              <VinylArtwork album={album} size="lg" />
+            </div>
+
+            <div className="min-w-0 flex-1 space-y-1">
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-1.5">
+                <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight leading-tight">
+                  {album.title}
+                </h2>
+                {album.edition && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-[#FF5A10]/15 text-[#FF5A10] border border-[#FF5A10]/25">
+                    <Sparkles className="w-3 h-3" />
+                    {album.edition}
+                  </span>
+                )}
+              </div>
+
+              <p className="text-sm font-medium text-[#8E8E93]">
+                {album.artist}
+                {album.releaseYear ? ` · ${album.releaseYear}` : ''}
+                {album.label ? ` · ${album.label}` : ''}
+              </p>
+
+              {album.variant && (
+                <p className="text-xs text-[#FF7A00] font-medium">
+                  Variant: {album.variant}
+                </p>
+              )}
+
+              {/* Rating Component */}
+              <div className="pt-1.5 flex items-center justify-center sm:justify-start gap-2">
+                <RatingStars
+                  value={album.personalRating || 0}
+                  size="md"
+                  onChange={(r) => {
+                    triggerHaptic('selection');
+                    onUpdateRating(album, r);
+                  }}
+                />
+                <span className="text-xs font-semibold text-[#8E8E93]">
+                  {album.personalRating ? `${album.personalRating} / 5` : 'Rate'}
+                </span>
+              </div>
+            </div>
           </div>
-          <div className="flex items-center gap-1">
+
+          {/* Action Buttons: Log Spin / Edit / Delete */}
+          <div className="flex items-center gap-2">
             <button
-              id="detail-edit-btn"
-              onClick={() => onEdit(album)}
-              className="p-2 text-[#726E65] hover:text-[#2D2D2A] hover:bg-[#EAE6DC] rounded-full transition"
-              title="Edit Album"
+              onClick={() => {
+                triggerHaptic('medium');
+                onLogListen(album);
+              }}
+              className="flex-1 py-2.5 px-4 rounded-xl bg-[#FF5A10] hover:bg-[#FF6F28] active:scale-98 text-white text-xs font-semibold flex items-center justify-center gap-1.5 shadow-md shadow-[#FF5A10]/20 transition cursor-pointer"
             >
-              <Edit3 className="w-4 h-4" />
+              <PlusCircle className="w-4 h-4" />
+              <span>Log Spin</span>
             </button>
+
             <button
-              id="detail-delete-btn"
-              onClick={() => setShowDeleteConfirm(true)}
-              className="p-2 text-[#726E65] hover:text-[#8A5A53] hover:bg-[#8A5A53]/10 rounded-full transition"
-              title="Delete Record"
+              onClick={() => {
+                triggerHaptic('light');
+                onEdit(album);
+              }}
+              className="py-2.5 px-4 rounded-xl bg-neutral-800 hover:bg-neutral-700 active:scale-98 text-neutral-200 text-xs font-semibold flex items-center justify-center gap-1.5 border border-white/10 transition cursor-pointer"
+            >
+              <Edit3 className="w-3.5 h-3.5" />
+              <span>Edit</span>
+            </button>
+
+            <button
+              onClick={() => {
+                triggerHaptic('warning');
+                setShowDeleteConfirm(true);
+              }}
+              className="p-2.5 rounded-xl bg-neutral-800 hover:bg-red-500/20 active:scale-98 text-neutral-400 hover:text-red-400 border border-white/10 transition cursor-pointer"
+              title="Delete Album"
             >
               <Trash2 className="w-4 h-4" />
             </button>
-            <button
-              id="detail-close-btn"
-              onClick={onClose}
-              className="p-2 text-[#726E65] hover:text-[#2D2D2A] hover:bg-[#EAE6DC] rounded-full transition ml-1"
-              title="Close Details"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-
-        {/* Modal Scroll Content */}
-        <div className="p-4 sm:p-6 space-y-6 flex-1 overflow-y-auto pb-12 sm:pb-6">
-          {/* SECTION 1: OVERVIEW */}
-          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 p-4 sm:p-6 rounded-2xl bg-white border border-[#D9D4C7] shadow-xs">
-            <div className="flex-shrink-0 flex justify-center">
-              <VinylArtwork album={album} size="xl" showDiscPeek />
-            </div>
-
-            <div className="flex-1 text-center sm:text-left min-w-0 w-full">
-              <h2 className="font-serif text-2xl sm:text-3xl font-semibold text-[#2D2D2A] tracking-tight leading-tight">
-                {album.title}
-              </h2>
-              <p className="text-base sm:text-lg font-normal text-[#5D614E] mt-1">
-                {album.artist}
-              </p>
-
-              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mt-3 text-xs text-[#555846] font-mono">
-                {album.releaseYear && (
-                  <span className="px-2 py-0.5 rounded bg-[#F4F1EA] border border-[#D9D4C7]">
-                    {album.releaseYear}
-                  </span>
-                )}
-                {album.format && (
-                  <span className="px-2 py-0.5 rounded bg-[#F4F1EA] border border-[#D9D4C7]">
-                    {album.format}
-                  </span>
-                )}
-                {album.rpm && (
-                  <span className="px-2 py-0.5 rounded bg-[#F4F1EA] border border-[#D9D4C7]">
-                    {album.rpm} RPM
-                  </span>
-                )}
-                {album.discCount && album.discCount > 1 && (
-                  <span className="px-2 py-0.5 rounded bg-[#F4F1EA] border border-[#D9D4C7]">
-                    {album.discCount}× Disc
-                  </span>
-                )}
-              </div>
-
-              {/* Classification: Genre & Style */}
-              <div className="mt-3.5 pt-3 border-t border-[#EFECE4] space-y-1.5 text-xs text-left">
-                <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2">
-                  <span className="text-[11px] font-mono uppercase tracking-wider text-[#726E65] w-14 shrink-0">
-                    Genre
-                  </span>
-                  <span className="text-[#2D2D2A] font-medium">
-                    {album.genres && album.genres.length > 0 ? (
-                      album.genres.join(' · ')
-                    ) : (
-                      <span className="text-[#8B8C7A] italic font-normal">Unassigned</span>
-                    )}
-                  </span>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2">
-                  <span className="text-[11px] font-mono uppercase tracking-wider text-[#726E65] w-14 shrink-0">
-                    Style
-                  </span>
-                  <span className="text-[#555846]">
-                    {album.styles && album.styles.length > 0 ? (
-                      album.styles.join(' · ')
-                    ) : (
-                      <span className="text-[#8B8C7A] italic font-normal">Unassigned</span>
-                    )}
-                  </span>
-                </div>
-              </div>
-
-              {/* Personal Rating Row with direct half-star control */}
-              <div className="mt-3 pt-3 border-t border-[#EFECE4] flex flex-col sm:flex-row items-center sm:items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-[#726E65] font-medium">Personal Rating:</span>
-                  <RatingStars
-                    value={album.personalRating || 0}
-                    onChange={(newVal) => onUpdateRating(album, newVal)}
-                    size="md"
-                    showLabel
-                  />
-                </div>
-                <button
-                  id="detail-log-spin-btn"
-                  onClick={() => onLogListen(album)}
-                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#5D614E] hover:bg-[#4E5240] active:scale-98 text-[#FAF8F5] text-xs font-medium transition shadow-xs"
-                >
-                  <PlusCircle className="w-3.5 h-3.5" />
-                  <span>Log Spin</span>
-                </button>
-              </div>
-            </div>
           </div>
 
-          {/* SECTION 2: EDITION & PRESSING DETAILS */}
-          <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#D9D4C7] space-y-3 shadow-xs">
-            <h3 className="text-xs font-mono uppercase tracking-wider text-[#726E65] flex items-center gap-1.5">
-              <Disc className="w-3.5 h-3.5 text-[#5D614E]" />
-              <span>Edition & Physical Record Details</span>
+          {/* 1. Core Specifications Group */}
+          <div className="space-y-2">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-[#8E8E93] px-1">
+              General & Playback Info
             </h3>
-
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
-              <div className="p-2.5 rounded-xl bg-[#FCFAF6] border border-[#D9D4C7]">
-                <span className="text-[#726E65] block text-[11px]">Format</span>
-                <span className="text-[#2D2D2A] font-medium">{album.format || 'Not specified'}</span>
-              </div>
-              <div className="p-2.5 rounded-xl bg-[#FCFAF6] border border-[#D9D4C7]">
-                <span className="text-[#726E65] block text-[11px]">Edition</span>
-                <span className="text-[#2D2D2A] font-medium">{album.edition || 'Not specified'}</span>
-              </div>
-              <div className="p-2.5 rounded-xl bg-[#FCFAF6] border border-[#D9D4C7]">
-                <span className="text-[#726E65] block text-[11px]">Color / Variant</span>
-                <span className="text-[#2D2D2A] font-medium">
-                  {album.variant || 'Not specified'}
-                  {album.vinylWeight && (
-                    <span className="ml-1 text-[10px] text-[#726E65] font-mono">({album.vinylWeight})</span>
-                  )}
+            <div className="bg-neutral-950/70 border border-white/[0.08] rounded-2xl overflow-hidden divide-y divide-white/[0.06]">
+              <div className="p-3 flex items-center justify-between text-xs">
+                <span className="text-[#8E8E93] flex items-center gap-1.5">
+                  <Disc className="w-3.5 h-3.5 text-[#FF5A10]" />
+                  Play Count
+                </span>
+                <span className="font-semibold text-white">
+                  {playCount} {playCount === 1 ? 'spin' : 'spins'}
                 </span>
               </div>
-              <div className="p-2.5 rounded-xl bg-[#FCFAF6] border border-[#D9D4C7]">
-                <span className="text-[#726E65] block text-[11px]">Record Label</span>
-                <span className="text-[#2D2D2A] font-medium">{album.label || 'Not specified'}</span>
+
+              <div className="p-3 flex items-center justify-between text-xs">
+                <span className="text-[#8E8E93] flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5 text-[#FF5A10]" />
+                  Last Spun
+                </span>
+                <span className="font-semibold text-white">{formatDate(lastPlayed)}</span>
               </div>
-              <div className="p-2.5 rounded-xl bg-[#FCFAF6] border border-[#D9D4C7]">
-                <span className="text-[#726E65] block text-[11px]">Speed</span>
-                <span className="text-[#2D2D2A] font-medium">{album.rpm ? `${album.rpm} RPM` : 'Not specified'}</span>
-              </div>
-              <div className="p-2.5 rounded-xl bg-[#FCFAF6] border border-[#D9D4C7]">
-                <span className="text-[#726E65] block text-[11px]">Country</span>
-                <span className="text-[#2D2D2A] font-medium">{album.country || 'Not specified'}</span>
-              </div>
-              {album.physicalIdentifier && (
-                <div className="p-2.5 rounded-xl bg-[#FCFAF6] border border-[#D9D4C7] col-span-2 sm:col-span-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[#726E65] block text-[11px]">Physical Identifier</span>
-                    <span className="text-[10px] px-1.5 py-0.2 rounded bg-[#EAE6DC] text-[#474A3D] font-mono">
-                      {album.identifierType || 'verbatim'}
+
+              {album.format && (
+                <div className="p-3 flex items-center justify-between text-xs">
+                  <span className="text-[#8E8E93]">Format</span>
+                  <span className="font-semibold text-white">{album.format}</span>
+                </div>
+              )}
+
+              {album.rpm && (
+                <div className="p-3 flex items-center justify-between text-xs">
+                  <span className="text-[#8E8E93]">Speed (RPM)</span>
+                  <span className="font-semibold text-white">{album.rpm} RPM</span>
+                </div>
+              )}
+
+              {album.discCount !== undefined && album.discCount > 0 && (
+                <div className="p-3 flex items-center justify-between text-xs">
+                  <span className="text-[#8E8E93]">Disc Count</span>
+                  <span className="font-semibold text-white">{album.discCount} {album.discCount === 1 ? 'disc' : 'discs'}</span>
+                </div>
+              )}
+
+              {album.genres && album.genres.length > 0 && (
+                <div className="p-3 flex items-center justify-between text-xs">
+                  <span className="text-[#8E8E93]">Genres</span>
+                  <span className="font-semibold text-white">{album.genres.join(', ')}</span>
+                </div>
+              )}
+
+              {album.styles && album.styles.length > 0 && (
+                <div className="p-3 flex items-center justify-between text-xs">
+                  <span className="text-[#8E8E93]">Styles</span>
+                  <span className="font-semibold text-white">{album.styles.join(', ')}</span>
+                </div>
+              )}
+
+              {album.label && (
+                <div className="p-3 flex items-center justify-between text-xs">
+                  <span className="text-[#8E8E93]">Record Label</span>
+                  <span className="font-semibold text-white">{album.label}</span>
+                </div>
+              )}
+
+              {album.catalogNumber && (
+                <div className="p-3 flex items-center justify-between text-xs">
+                  <span className="text-[#8E8E93]">Catalog Number</span>
+                  <span className="font-semibold text-white font-mono">{album.catalogNumber}</span>
+                </div>
+              )}
+
+              {album.country && (
+                <div className="p-3 flex items-center justify-between text-xs">
+                  <span className="text-[#8E8E93]">Country of Origin</span>
+                  <span className="font-semibold text-white">{album.country}</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* 2. Physical Pressing, Deadwax & Matrix Metadata */}
+          <div className="space-y-2">
+            <button
+              type="button"
+              onClick={() => {
+                triggerHaptic('light');
+                setShowPhysicalDetails(!showPhysicalDetails);
+              }}
+              className="w-full flex items-center justify-between px-1 text-xs font-semibold uppercase tracking-wider text-[#8E8E93] hover:text-white cursor-pointer"
+            >
+              <span>Deadwax, Matrix & Pressing Details</span>
+              {showPhysicalDetails ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+            </button>
+
+            {showPhysicalDetails && (
+              <div className="bg-neutral-950/70 border border-white/[0.08] rounded-2xl overflow-hidden divide-y divide-white/[0.06]">
+                {album.matrixRunout ? (
+                  <div className="p-3 text-xs">
+                    <span className="text-[#8E8E93] block mb-1">Matrix / Runout Groove Etching</span>
+                    <span className="font-mono text-white bg-neutral-900 px-2.5 py-1 rounded-md inline-block border border-white/[0.06]">
+                      {album.matrixRunout}
                     </span>
                   </div>
-                  <span className="text-[#2D2D2A] font-mono font-medium block mt-0.5">{album.physicalIdentifier}</span>
-                </div>
-              )}
-              {album.catalogNumber && (
-                <div className="p-2.5 rounded-xl bg-[#FCFAF6] border border-[#D9D4C7] col-span-2 sm:col-span-1">
-                  <span className="text-[#726E65] block text-[11px]">Catalog #</span>
-                  <span className="text-[#2D2D2A] font-mono">{album.catalogNumber}</span>
-                </div>
-              )}
-              {album.barcode && (
-                <div className="p-2.5 rounded-xl bg-[#FCFAF6] border border-[#D9D4C7] col-span-2 sm:col-span-1">
-                  <span className="text-[#726E65] block text-[11px]">Barcode (UPC/EAN)</span>
-                  <span className="text-[#2D2D2A] font-mono">{album.barcode}</span>
-                </div>
-              )}
-              {album.pressingPlant && (
-                <div className="p-2.5 rounded-xl bg-[#FCFAF6] border border-[#D9D4C7] col-span-2 sm:col-span-1">
-                  <span className="text-[#726E65] block text-[11px]">Pressing Plant</span>
-                  <span className="text-[#2D2D2A] font-medium">{album.pressingPlant}</span>
-                </div>
-              )}
-              {album.matrixRunout && (
-                <div className="p-2.5 rounded-xl bg-[#FCFAF6] border border-[#D9D4C7] col-span-2 sm:col-span-3">
-                  <span className="text-[#726E65] block text-[11px]">Matrix / Runout Grooves</span>
-                  <span className="text-[#2D2D2A] font-mono text-[11px] break-all text-[#3F3F3B]">{album.matrixRunout}</span>
-                </div>
-              )}
-            </div>
+                ) : (
+                  <div className="p-3 text-xs flex justify-between text-[#8E8E93]">
+                    <span>Matrix / Runout</span>
+                    <span className="text-neutral-600">Uncataloged</span>
+                  </div>
+                )}
 
-            {album.packagingExtras && album.packagingExtras.length > 0 && (
-              <div className="pt-2">
-                <span className="text-[11px] text-[#726E65] block mb-1.5 font-medium">Packaging Extras & Inserts:</span>
-                <div className="flex flex-wrap gap-1.5">
-                  {album.packagingExtras.map((extra, idx) => (
-                    <span
-                      key={idx}
-                      className="px-2 py-0.5 rounded-md bg-[#F4F1EA] border border-[#D9D4C7] text-xs text-[#474A3D]"
-                    >
-                      {extra}
+                {album.pressingPlant && (
+                  <div className="p-3 flex items-center justify-between text-xs">
+                    <span className="text-[#8E8E93] flex items-center gap-1.5">
+                      <Building className="w-3.5 h-3.5 text-[#FF5A10]" />
+                      Pressing Plant
                     </span>
-                  ))}
-                </div>
+                    <span className="font-semibold text-white">{album.pressingPlant}</span>
+                  </div>
+                )}
+
+                {album.vinylWeight && (
+                  <div className="p-3 flex items-center justify-between text-xs">
+                    <span className="text-[#8E8E93]">Vinyl Weight</span>
+                    <span className="font-semibold text-white">{album.vinylWeight}</span>
+                  </div>
+                )}
+
+                {album.barcode && (
+                  <div className="p-3 flex items-center justify-between text-xs">
+                    <span className="text-[#8E8E93] flex items-center gap-1.5">
+                      <Barcode className="w-3.5 h-3.5 text-[#FF5A10]" />
+                      Barcode (UPC/EAN)
+                    </span>
+                    <span className="font-mono font-semibold text-white">{album.barcode}</span>
+                  </div>
+                )}
+
+                {album.pressingCountry && (
+                  <div className="p-3 flex items-center justify-between text-xs">
+                    <span className="text-[#8E8E93] flex items-center gap-1.5">
+                      <Globe className="w-3.5 h-3.5 text-[#FF5A10]" />
+                      Pressing Country
+                    </span>
+                    <span className="font-semibold text-white">{album.pressingCountry}</span>
+                  </div>
+                )}
+
+                {album.packagingExtras && album.packagingExtras.length > 0 && (
+                  <div className="p-3 text-xs">
+                    <span className="text-[#8E8E93] block mb-1.5">Packaging Extras</span>
+                    <div className="flex flex-wrap gap-1">
+                      {album.packagingExtras.map((extra) => (
+                        <span
+                          key={extra}
+                          className="px-2 py-0.5 rounded-md bg-white/[0.06] text-neutral-300 text-[11px] border border-white/[0.06]"
+                        >
+                          {extra}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
 
-          {/* SECTION 3: PERSONAL NOTES & ACQUISITION */}
-          <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#D9D4C7] space-y-3 shadow-xs">
-            <h3 className="text-xs font-mono uppercase tracking-wider text-[#726E65] flex items-center gap-1.5">
-              <FileText className="w-3.5 h-3.5 text-[#5D614E]" />
-              <span>Personal Notes & Acquisition</span>
+          {/* 3. Acquisition, Provenance & Pricing */}
+          <div className="space-y-2">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-[#8E8E93] px-1">
+              Provenance & Financials
+            </h3>
+            <div className="bg-neutral-950/70 border border-white/[0.08] rounded-2xl overflow-hidden divide-y divide-white/[0.06]">
+              {album.purchasePrice !== undefined && (
+                <div className="p-3 flex items-center justify-between text-xs">
+                  <span className="text-[#8E8E93] flex items-center gap-1.5">
+                    <DollarSign className="w-3.5 h-3.5 text-[#FF5A10]" />
+                    Purchase Price
+                  </span>
+                  <span className="font-semibold text-emerald-400 font-mono">
+                    ${album.purchasePrice.toFixed(2)}
+                  </span>
+                </div>
+              )}
+
+              {album.purchaseDate && (
+                <div className="p-3 flex items-center justify-between text-xs">
+                  <span className="text-[#8E8E93] flex items-center gap-1.5">
+                    <Calendar className="w-3.5 h-3.5 text-[#FF5A10]" />
+                    Acquired Date
+                  </span>
+                  <span className="font-semibold text-white">{formatDate(album.purchaseDate)}</span>
+                </div>
+              )}
+
+              {album.location && (
+                <div className="p-3 flex items-center justify-between text-xs">
+                  <span className="text-[#8E8E93] flex items-center gap-1.5">
+                    <MapPin className="w-3.5 h-3.5 text-[#FF5A10]" />
+                    Shelf Location
+                  </span>
+                  <span className="font-semibold text-white">{album.location}</span>
+                </div>
+              )}
+
+              {album.discogsId && (
+                <div className="p-3 flex items-center justify-between text-xs">
+                  <span className="text-[#8E8E93] flex items-center gap-1.5">
+                    <ExternalLink className="w-3.5 h-3.5 text-[#FF5A10]" />
+                    Discogs Reference
+                  </span>
+                  <a
+                    href={`https://www.discogs.com/release/${album.discogsId}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-[#FF5A10] hover:underline font-mono"
+                  >
+                    r{album.discogsId}
+                  </a>
+                </div>
+              )}
+
+              <div className="p-3 flex items-center justify-between text-xs">
+                <span className="text-[#8E8E93]">Added to Archive</span>
+                <span className="text-neutral-400">{formatDate(album.addedAt)}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* 4. Collector & Research Notes */}
+          {(album.notes || album.researchNotes) && (
+            <div className="space-y-2">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-[#8E8E93] px-1 flex items-center gap-1.5">
+                <FileText className="w-3.5 h-3.5 text-[#FF5A10]" />
+                Notes & Provenance
+              </h3>
+              <div className="bg-neutral-950/70 border border-white/[0.08] rounded-2xl p-3.5 text-xs text-neutral-300 leading-relaxed whitespace-pre-wrap space-y-2">
+                {album.notes && <p>{album.notes}</p>}
+                {album.researchNotes && (
+                  <p className="text-neutral-400 border-t border-white/[0.06] pt-2 text-[11px]">
+                    <strong className="text-neutral-300">Research findings:</strong> {album.researchNotes}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* 5. Spin Log History */}
+          <div className="space-y-2">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-[#8E8E93] px-1 flex items-center justify-between">
+              <span>Listening History ({albumLogs.length})</span>
             </h3>
 
-            {album.notes ? (
-              <div className="p-3.5 rounded-xl bg-[#FCFAF6] border border-[#D9D4C7] text-sm text-[#2D2D2A] whitespace-pre-wrap leading-relaxed">
-                {album.notes}
-              </div>
-            ) : (
-              <div className="p-3.5 rounded-xl bg-[#FCFAF6] border border-dashed border-[#D9D4C7] text-xs text-[#726E65] italic">
-                No personal notes added yet. Tap "Edit" to add thoughts, memories, or pressing impressions.
-              </div>
-            )}
-
-            <div className="grid grid-cols-2 gap-3 pt-1 text-xs">
-              <div className="flex items-center gap-2 p-2.5 rounded-xl bg-[#FCFAF6] border border-[#D9D4C7]">
-                <DollarSign className="w-4 h-4 text-[#8B8C7A]" />
-                <div>
-                  <span className="text-[#726E65] text-[11px] block font-medium">Purchase Price</span>
-                  <span className="text-[#2D2D2A] font-medium">
-                    {album.purchasePrice !== undefined ? `$${album.purchasePrice.toFixed(2)}` : 'Not specified'}
-                  </span>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 p-2.5 rounded-xl bg-[#FCFAF6] border border-[#D9D4C7]">
-                <Calendar className="w-4 h-4 text-[#8B8C7A]" />
-                <div>
-                  <span className="text-[#726E65] text-[11px] block font-medium">Purchase Date</span>
-                  <span className="text-[#2D2D2A] font-medium">
-                    {album.purchaseDate ? formatDate(album.purchaseDate) : 'Not specified'}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* SECTION 4: LISTENING HISTORY */}
-          <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#D9D4C7] space-y-3 shadow-xs">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <h3 className="text-xs font-mono uppercase tracking-wider text-[#726E65] flex items-center gap-1.5">
-                  <Clock className="w-3.5 h-3.5 text-[#5D614E]" />
-                  <span>Listening History</span>
-                </h3>
-                <span className="px-2 py-0.5 rounded bg-[#EAE6DC] text-[#474A3D] border border-[#D9D4C7] text-xs font-mono font-medium">
-                  {playCount} {playCount === 1 ? 'Listen' : 'Listens'}
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                {lastPlayed && (
-                  <span className="text-[11px] font-mono text-[#726E65] hidden sm:inline">
-                    Last: {formatDate(lastPlayed)}
-                  </span>
-                )}
-                <button
-                  id="record-detail-log-listen-btn"
-                  onClick={() => onLogListen(album)}
-                  className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#5D614E] hover:bg-[#4E5240] text-[#FAF8F5] text-xs font-medium transition shadow-xs"
-                >
-                  <PlusCircle className="w-3.5 h-3.5" />
-                  <span>Log Listen</span>
-                </button>
-              </div>
-            </div>
-
             {albumLogs.length === 0 ? (
-              <div className="p-5 rounded-xl bg-[#FCFAF6] border border-dashed border-[#D9D4C7] text-center space-y-2">
-                <p className="font-serif text-base font-semibold text-[#2D2D2A]">No listens logged yet</p>
-                <p className="text-xs text-[#726E65]">
-                  Log your first listen to start tracking your personal listening history for this record.
-                </p>
-                <button
-                  onClick={() => onLogListen(album)}
-                  className="mt-2 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#5D614E] hover:bg-[#4E5240] text-[#FAF8F5] text-xs font-medium transition shadow-xs"
-                >
-                  <PlusCircle className="w-3.5 h-3.5" />
-                  Log First Listen
-                </button>
+              <div className="bg-neutral-950/70 border border-white/[0.08] rounded-2xl p-4 text-center text-xs text-[#8E8E93]">
+                No spins logged yet. Hit "Log Spin" after your listening session.
               </div>
             ) : (
-              <div className="space-y-2">
+              <div className="bg-neutral-950/70 border border-white/[0.08] rounded-2xl overflow-hidden divide-y divide-white/[0.06]">
                 {albumLogs.map((log) => (
-                  <div
-                    key={log.id}
-                    id={`listen-log-${log.id}`}
-                    className="p-3 rounded-xl bg-[#FCFAF6] border border-[#D9D4C7] flex items-start justify-between gap-3 text-xs"
-                  >
-                    <div className="space-y-1 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-mono text-[#2D2D2A] font-medium">
-                          {formatDateTime(log.listenedAt)}
-                        </span>
-                        {log.rating !== undefined && log.rating > 0 && (
-                          <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-white border border-[#D9D4C7] text-[11px] text-[#474A3D]">
-                            <span>Session:</span>
-                            <RatingStars value={log.rating} size="sm" />
-                          </span>
-                        )}
-                        {log.context && (
-                          <span className="px-1.5 py-0.5 rounded text-[10px] bg-[#EAE6DC] text-[#474A3D] border border-[#D9D4C7]">
-                            {log.context}
-                          </span>
+                  <div key={log.id} className="p-3 flex items-center justify-between text-xs">
+                    <div>
+                      <p className="font-semibold text-white">{formatDateTime(log.listenedAt)}</p>
+                      <div className="flex items-center gap-2 text-[11px] text-[#8E8E93] mt-0.5">
+                        {log.context && <span>{log.context}</span>}
+                        {log.rating && (
+                          <span>· <RatingStars value={log.rating} size="sm" /></span>
                         )}
                       </div>
                       {log.note && (
-                        <p className="text-[#726E65] text-xs italic mt-1 leading-relaxed">"{log.note}"</p>
+                        <p className="text-[11px] text-neutral-400 italic mt-0.5">"{log.note}"</p>
                       )}
                     </div>
                     <button
-                      id={`delete-log-btn-${log.id}`}
-                      onClick={() => onDeleteListenLog(log.id)}
-                      className="text-[#8B8C7A] hover:text-[#8A5A53] p-1.5 rounded-lg hover:bg-[#EAE6DC] transition"
-                      title="Delete this listen entry"
+                      onClick={() => {
+                        triggerHaptic('light');
+                        onDeleteListenLog(log.id);
+                      }}
+                      className="text-neutral-500 hover:text-red-400 p-1 transition cursor-pointer"
+                      title="Delete log entry"
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
+                      <X className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 ))}
               </div>
             )}
           </div>
-
-          {/* SECTION 5: RESEARCH & REGISTRY METADATA */}
-          <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#D9D4C7] space-y-3.5 shadow-xs">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xs font-mono uppercase tracking-wider text-[#726E65] flex items-center gap-1.5">
-                <Database className="w-3.5 h-3.5 text-[#5D614E]" />
-                <span>Research Baseline & Registry Metadata</span>
-              </h3>
-              {album.confidence && (
-                <span
-                  className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-medium border ${
-                    album.confidence.toLowerCase().includes('high')
-                      ? 'bg-[#5D614E]/10 text-[#5D614E] border-[#5D614E]/25'
-                      : album.confidence.toLowerCase().includes('likely')
-                      ? 'bg-[#B08930]/10 text-[#84631B] border-[#B08930]/30'
-                      : 'bg-[#8A5A53]/10 text-[#733F39] border-[#8A5A53]/30'
-                  }`}
-                >
-                  {album.confidence}
-                </span>
-              )}
-            </div>
-
-            {/* Research status banner if discrepancies, physical confirmation, or notes exist */}
-            {(album.researchStatus || album.physicalConfirmation || album.researchNotes || (album.researchConflicts && album.researchConflicts.length > 0)) && (
-              <div className="p-3 rounded-xl bg-[#FAF8F5] border border-[#D9D4C7] text-xs space-y-2">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  {album.researchStatus && (
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[#726E65] text-[11px] font-medium">Status:</span>
-                      <span className="font-mono text-[#2D2D2A] font-medium capitalize">
-                        {album.researchStatus}
-                      </span>
-                    </div>
-                  )}
-                  {album.physicalConfirmation && (
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[#726E65] text-[11px] font-medium">Physical Verification:</span>
-                      <span
-                        className={`px-2 py-0.5 rounded text-[10px] font-mono uppercase ${
-                          album.physicalConfirmation.includes('required')
-                            ? 'bg-[#B08930]/15 text-[#6D5215] border border-[#B08930]/30 font-medium'
-                            : 'bg-[#EAE6DC] text-[#474A3D]'
-                        }`}
-                      >
-                        {album.physicalConfirmation}
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                {album.researchNotes && (
-                  <div className="pt-2 border-t border-[#EAE6DC]">
-                    <span className="text-[#726E65] text-[11px] block font-medium">Research Notes & Catalog Provenance:</span>
-                    <p className="text-[#3F3F3B] text-xs leading-relaxed mt-0.5">{album.researchNotes}</p>
-                  </div>
-                )}
-
-                {album.researchConflicts && album.researchConflicts.length > 0 && (
-                  <div className="pt-2 border-t border-[#EAE6DC]">
-                    <span className="text-[#8A5A53] text-[11px] block font-medium">Recorded Discrepancies:</span>
-                    <ul className="list-disc list-inside text-xs text-[#733F39] mt-0.5 space-y-0.5">
-                      {album.researchConflicts.map((c, i) => (
-                        <li key={i}>{c}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            )}
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-              <div className="p-2.5 rounded-xl bg-[#FCFAF6] border border-[#D9D4C7]">
-                <span className="text-[#726E65] block text-[11px] font-medium">Unique Record ID</span>
-                <span className="text-[#2D2D2A] font-mono text-xs break-all">{album.id}</span>
-              </div>
-
-              <div className="p-2.5 rounded-xl bg-[#FCFAF6] border border-[#D9D4C7]">
-                <span className="text-[#726E65] block text-[11px] font-medium">Added to Collection</span>
-                <span className="text-[#2D2D2A] font-medium">{formatDate(album.addedAt)}</span>
-              </div>
-
-              <div className="p-2.5 rounded-xl bg-[#FCFAF6] border border-[#D9D4C7]">
-                <span className="text-[#726E65] block text-[11px] font-medium">Last Modified</span>
-                <span className="text-[#2D2D2A] font-medium">{formatDate(album.updatedAt)}</span>
-              </div>
-
-              <div className="p-2.5 rounded-xl bg-[#FCFAF6] border border-[#D9D4C7]">
-                <span className="text-[#726E65] block text-[11px] font-medium">Discogs ID</span>
-                <span className="text-[#2D2D2A] font-medium">
-                  {album.discogsId ? album.discogsId : 'Not linked'}
-                </span>
-              </div>
-            </div>
-
-            <div className="pt-1 flex items-center gap-2 text-[11px] text-[#726E65]">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#5D614E]"></span>
-              <span>Stored locally in browser IndexedDB (Phase 6 Research Master v2.0 baseline)</span>
-            </div>
-          </div>
         </div>
 
-        {/* Delete Confirmation Modal */}
+        {/* Delete Confirmation Alert */}
         {showDeleteConfirm && (
-          <div
-            onClick={(e) => {
-              if (e.target === e.currentTarget) setShowDeleteConfirm(false);
-            }}
-            className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-[#2D2D2A]/60 backdrop-blur-xs"
-          >
-            <div className="w-full max-w-md rounded-2xl bg-white border border-[#D9D4C7] p-5 text-[#2D2D2A] shadow-2xl space-y-4">
-              <div className="flex items-center gap-3 text-[#8A5A53]">
-                <div className="w-10 h-10 rounded-xl bg-[#8A5A53]/15 flex items-center justify-center">
-                  <Trash2 className="w-5 h-5 text-[#8A5A53]" />
-                </div>
-                <div>
-                  <h4 className="font-serif text-base font-semibold text-[#2D2D2A]">Delete from Registry?</h4>
-                  <p className="text-xs text-[#726E65]">This action cannot be undone.</p>
-                </div>
-              </div>
-
-              <p className="text-xs text-[#2D2D2A] leading-relaxed">
-                Are you sure you want to delete <strong>"{album.title}"</strong> by <strong>{album.artist}</strong>?
-                {playCount > 0 && (
-                  <span className="block mt-1 text-[#733F39] font-medium">
-                    Note: Deleting this album will also safely remove its {playCount} listening log entries to prevent orphaned data.
-                  </span>
-                )}
-              </p>
-
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#D9D4C7]">
-                <button
-                  onClick={() => setShowDeleteConfirm(false)}
-                  className="px-4 py-2 rounded-xl bg-[#EAE6DC] hover:bg-[#D9D4C7] text-xs font-medium text-[#2D2D2A] transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  id="confirm-delete-album-btn"
-                  onClick={() => {
-                    onDelete(album.id);
-                    setShowDeleteConfirm(false);
-                    onClose();
-                  }}
-                  className="px-4 py-2 rounded-xl bg-[#8A5A53] hover:bg-[#733F39] text-xs font-medium text-[#FAF8F5] transition shadow-xs"
-                >
-                  Delete Record
-                </button>
-              </div>
+          <div className="p-4 bg-red-950/50 border-t border-red-500/20 space-y-2">
+            <p className="text-xs text-red-200 font-semibold text-center">
+              Are you sure you want to remove "{album.title}" from your archive?
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                className="flex-1 py-1.5 rounded-xl bg-neutral-800 text-xs font-semibold text-white"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  triggerHaptic('heavy');
+                  onDelete(album.id);
+                }}
+                className="flex-1 py-1.5 rounded-xl bg-red-600 hover:bg-red-500 text-xs font-semibold text-white"
+              >
+                Delete Record
+              </button>
             </div>
           </div>
         )}
