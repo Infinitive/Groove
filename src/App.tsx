@@ -102,8 +102,8 @@ export default function App() {
       {/* Offline Status Pill */}
       <OfflineIndicator />
 
-      {/* Main View Container with Zero Top Header & Safe-Area Top Padding */}
-      <main className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 pt-[env(safe-area-inset-top,1.25rem)] sm:pt-6 pb-28 sm:pb-32">
+      {/* Main View Container with Zero Top Header & Safe-Area Top Padding (brought down below status bar shadow) */}
+      <main className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 pt-[calc(env(safe-area-inset-top,0px)+2rem)] sm:pt-[calc(env(safe-area-inset-top,0px)+2.5rem)] pb-28 sm:pb-32">
         <div key={currentTab} className="tab-view-wrapper">
           {currentTab === 'library' && (
             <LibraryView
