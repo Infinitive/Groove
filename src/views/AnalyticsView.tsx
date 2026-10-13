@@ -424,6 +424,32 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
                   </p>
                 </div>
               </div>
+
+              {/* Star Distribution Breakdown */}
+              {analytics?.collectionDemographics?.ratingDistribution &&
+                analytics.collectionDemographics.ratingDistribution.length > 0 && (
+                  <div className="pt-2 border-t border-white/[0.06] space-y-1.5">
+                    {analytics.collectionDemographics.ratingDistribution
+                      .slice()
+                      .reverse()
+                      .map((item) => (
+                        <div key={item.rating} className="flex items-center gap-2 text-[11px]">
+                          <span className="w-11 text-amber-400/90 font-medium whitespace-nowrap text-[10px]">
+                            ★ {item.rating}
+                          </span>
+                          <div className="flex-1 h-1.5 bg-neutral-950 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-amber-400 rounded-full transition-all duration-300"
+                              style={{ width: `${Math.max(4, item.percentage)}%` }}
+                            />
+                          </div>
+                          <span className="w-7 text-right text-white font-mono text-[10px] tabular-nums">
+                            {item.count}
+                          </span>
+                        </div>
+                      ))}
+                  </div>
+                )}
             </div>
 
             {/* Special Pressings & Variants */}

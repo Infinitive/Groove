@@ -66,7 +66,7 @@ export const RecordPickerModal: React.FC<RecordPickerModalProps> = ({
     >
       <div
         id="record-picker-sheet"
-        className="w-full sm:max-w-lg max-h-[88vh] bg-[#16161A]/98 backdrop-blur-2xl border-t sm:border border-white/10 rounded-t-[28px] sm:rounded-3xl flex flex-col shadow-2xl overflow-hidden animate-slide-up"
+        className="w-full sm:max-w-lg max-h-[min(90vh,calc(100dvh-5.5rem))] bg-[#16161A]/98 backdrop-blur-2xl border-t sm:border border-white/10 rounded-t-[28px] sm:rounded-3xl flex flex-col shadow-2xl overflow-hidden animate-slide-up"
       >
         {/* iOS Grab Handle */}
         <div className="pt-3 pb-1 flex justify-center flex-shrink-0">
@@ -169,7 +169,7 @@ export const RecordPickerModal: React.FC<RecordPickerModalProps> = ({
         )}
 
         {/* Scrollable Records List */}
-        <div className="flex-1 overflow-y-auto p-4 pt-2 divide-y divide-white/[0.04]">
+        <div className="flex-1 overflow-y-auto p-4 pt-2 pb-[calc(env(safe-area-inset-bottom,0px)+3rem)] divide-y divide-white/[0.04]">
           {filteredAlbums.length === 0 ? (
             <div className="py-12 text-center text-xs text-[#8E8E93]">
               No records found matching "{searchQuery}"

@@ -24,39 +24,39 @@ export const AppIcon: React.FC<AppIconProps> = ({ className = 'w-11 h-11', size 
       <defs>
         {/* Background Gradient (Subtle overhead studio lighting on dark matte) */}
         <linearGradient id="appIconBgGrad" x1="50%" y1="0%" x2="50%" y2="100%">
-          <stop offset="0%" stop-color="#262629" />
-          <stop offset="25%" stop-color="#1C1C1F" />
-          <stop offset="65%" stop-color="#131315" />
-          <stop offset="100%" stop-color="#0A0A0C" />
+          <stop offset="0%" stopColor="#262629" />
+          <stop offset="25%" stopColor="#1C1C1F" />
+          <stop offset="65%" stopColor="#131315" />
+          <stop offset="100%" stopColor="#0A0A0C" />
         </linearGradient>
 
         {/* Top Rim Specular Highlight (Subtle chamfer highlight) */}
         <linearGradient id="appIconRimGrad" x1="50%" y1="0%" x2="50%" y2="100%">
-          <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.25" />
-          <stop offset="15%" stop-color="#FFFFFF" stop-opacity="0.08" />
-          <stop offset="45%" stop-color="#FFFFFF" stop-opacity="0" />
-          <stop offset="100%" stop-color="#000000" stop-opacity="0.6" />
+          <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.25" />
+          <stop offset="15%" stopColor="#FFFFFF" stopOpacity="0.08" />
+          <stop offset="45%" stopColor="#FFFFFF" stopOpacity="0" />
+          <stop offset="100%" stopColor="#000000" stopOpacity="0.6" />
         </linearGradient>
 
         {/* Acoustic Waveform Ember Gradient */}
         <linearGradient id="appIconWaveGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stop-color="#FFA238" />
-          <stop offset="25%" stop-color="#FF6616" />
-          <stop offset="70%" stop-color="#F04804" />
-          <stop offset="100%" stop-color="#D42C00" />
+          <stop offset="0%" stopColor="#FFA238" />
+          <stop offset="25%" stopColor="#FF6616" />
+          <stop offset="70%" stopColor="#F04804" />
+          <stop offset="100%" stopColor="#D42C00" />
         </linearGradient>
 
         {/* Ambient Center Ember Glow */}
         <radialGradient id="appIconCenterGlow" cx="50%" cy="50%" r="45%">
-          <stop offset="0%" stop-color="#FF5A10" stop-opacity="0.16" />
-          <stop offset="55%" stop-color="#FF5A10" stop-opacity="0.04" />
-          <stop offset="100%" stop-color="#FF5A10" stop-opacity="0" />
+          <stop offset="0%" stopColor="#FF5A10" stopOpacity="0.16" />
+          <stop offset="55%" stopColor="#FF5A10" stopOpacity="0.04" />
+          <stop offset="100%" stopColor="#FF5A10" stopOpacity="0" />
         </radialGradient>
 
         {/* Drop Shadow for Tactile Elevation */}
         <filter id="appIconWaveElevation" x="-20%" y="-20%" width="140%" height="150%">
-          <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#000000" flood-opacity="0.75" />
-          <feDropShadow dx="0" dy="2.5" stdDeviation="2.5" flood-color="#000000" flood-opacity="0.5" />
+          <feDropShadow dx="0" dy="8" stdDeviation="8" floodColor="#000000" floodOpacity="0.75" />
+          <feDropShadow dx="0" dy="2.5" stdDeviation="2.5" floodColor="#000000" floodOpacity="0.5" />
         </filter>
 
         <clipPath id="appIconSquircleClip">

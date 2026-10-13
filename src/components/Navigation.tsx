@@ -134,7 +134,7 @@ export const Navigation: React.FC<NavigationProps> = ({
       {showMorePopover && (
         <div
           id="more-popover-menu"
-          className="fixed bottom-22 sm:bottom-24 right-20 sm:right-28 z-50 w-48 rounded-2xl bg-neutral-900/98 backdrop-blur-2xl border border-white/12 shadow-2xl p-1.5 space-y-1 animate-slide-up origin-bottom-right"
+          className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+5rem)] sm:bottom-24 right-20 sm:right-28 z-50 w-48 rounded-2xl bg-neutral-900/98 backdrop-blur-2xl border border-white/12 shadow-2xl p-1.5 space-y-1 animate-slide-up origin-bottom-right"
         >
           <button
             onClick={() => {
@@ -177,7 +177,7 @@ export const Navigation: React.FC<NavigationProps> = ({
       {showActionPopover && (
         <div
           id="action-popover-menu"
-          className="fixed bottom-22 sm:bottom-24 right-4 sm:right-6 z-50 w-52 rounded-2xl bg-neutral-900/98 backdrop-blur-2xl border border-white/12 shadow-2xl p-1.5 space-y-1 animate-slide-up origin-bottom-right"
+          className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+5rem)] sm:bottom-24 right-4 sm:right-6 z-50 w-52 rounded-2xl bg-neutral-900/98 backdrop-blur-2xl border border-white/12 shadow-2xl p-1.5 space-y-1 animate-slide-up origin-bottom-right"
         >
           <button
             onClick={() => {
@@ -237,7 +237,7 @@ export const Navigation: React.FC<NavigationProps> = ({
         id="bottom-navigation-container"
         aria-label="Main Navigation"
         onClick={isCollapsed ? handleExpandFromLeftCircle : undefined}
-        className={`fixed bottom-4 sm:bottom-6 z-40 select-none transition-all duration-350 ease-[cubic-bezier(0.175,0.885,0.32,1.275)] ${
+        className={`fixed bottom-[calc(env(safe-area-inset-bottom,0px)+0.75rem)] sm:bottom-6 z-40 select-none transition-all duration-350 ease-[cubic-bezier(0.175,0.885,0.32,1.275)] ${
           isCollapsed
             ? 'left-4 sm:left-6 translate-x-0 w-14 h-14 rounded-full cursor-pointer shadow-2xl hover:scale-105 active:scale-90'
             : 'left-4 sm:left-6 sm:left-1/2 sm:-translate-x-[calc(50%+2rem)] w-[calc(100%-6.5rem)] sm:w-auto sm:min-w-[320px] max-w-[340px] h-[58px] rounded-full'
@@ -319,7 +319,7 @@ export const Navigation: React.FC<NavigationProps> = ({
         id="bottom-action-button"
         onClick={handleToggleActionPopover}
         aria-label="Add or Log"
-        className={`fixed bottom-4 sm:bottom-6 right-4 sm:right-6 z-40 w-14 h-14 rounded-full dark-glass-tabbar flex items-center justify-center shadow-2xl border border-white/20 active:scale-90 hover:scale-105 cursor-pointer transition-all duration-200 ${
+        className={`fixed bottom-[calc(env(safe-area-inset-bottom,0px)+0.75rem)] sm:bottom-6 right-4 sm:right-6 z-40 w-14 h-14 rounded-full dark-glass-tabbar flex items-center justify-center shadow-2xl border border-white/20 active:scale-90 hover:scale-105 cursor-pointer transition-all duration-200 ${
           showActionPopover ? 'bg-[#FF5A10] text-white rotate-45 border-[#FF5A10]' : 'text-white'
         }`}
       >

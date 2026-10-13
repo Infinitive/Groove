@@ -22,10 +22,15 @@ interface SettingsModalProps {
     mode: 'replace' | 'merge'
   ) => Promise<{ importedAlbums?: number; importedLogs?: number; importedWishlist?: number; albums?: number; logs?: number }>;
   onExportCSV: (type: 'library' | 'listens' | 'wishlist') => string;
+  onClearDatabase?: () => Promise<void>;
+  onLoadDemoCatalogue?: () => Promise<void>;
   onResetCatalogue?: () => Promise<void>;
   onResetToCatalogue?: () => Promise<void>;
+  onResetToDefault?: () => Promise<void>;
+  totalAlbums?: number;
   albumCount?: number;
   collectionCount?: number;
+  totalListens?: number;
   listenLogCount?: number;
   listenCount?: number;
   wishlistCount?: number;
@@ -36,29 +41,39 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onExportJSON,
   onImportJSON,
   onExportCSV,
+  onClearDatabase,
+  onLoadDemoCatalogue,
   onResetCatalogue,
   onResetToCatalogue,
+  onResetToDefault,
+  totalAlbums,
   albumCount,
-  collectionCount = 0,
+  collectionCount,
+  totalListens,
   listenLogCount,
-  listenCount = 0,
+  listenCount,
   wishlistCount = 0,
 }) => {
-  const totalAlbums = albumCount ?? collectionCount;
-  const totalListens = listenLogCount ?? listenCount;
-  const resetHandler = onResetCatalogue || onResetToCatalogue;
+  const totalAlbumsCount = totalAlbums ?? albumCount ?? collectionCount ?? 0;
+  const totalListensCount = totalListens ?? listenLogCount ?? listenCount ?? 0;
+  const totalWishlistCount = wishlistCount ?? 0;
+  const clearHandler = onClearDatabase || onResetToDefault || onResetCatalogue || onResetToCatalogue;
+  const demoHandler = onLoadDemoCatalogue || onResetCatalogue || onResetToCatalogue;
 
   const [importMode, setImportMode] = useState<'replace' | 'merge'>('replace');
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [showDemoConfirm, setShowDemoConfirm] = useState(false);
   const [processing, setProcessing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        if (showResetConfirm) {
-          setShowResetConfirm(false);
+        if (showClearConfirm) {
+          setShowClearConfirm(false);
+        } else if (showDemoConfirm) {
+          setShowDemoConfirm(false);
         } else {
           onClose();
         }
@@ -66,7 +81,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [showResetConfirm, onClose]);
+  }, [showClearConfirm, showDemoConfirm, onClose]);
 
   const downloadFile = (content: string, filename: string, mimeType: string) => {
     const blob = new Blob([content], { type: mimeType });
@@ -143,7 +158,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     >
       <div
         id="settings-sheet"
-        className="w-full sm:max-w-md max-h-[92vh] sm:max-h-[85vh] bg-neutral-900/95 backdrop-blur-2xl border-t sm:border border-white/10 rounded-t-[28px] sm:rounded-3xl flex flex-col shadow-2xl overflow-hidden animate-slide-up"
+        className="w-full sm:max-w-md max-h-[min(90vh,calc(100dvh-5.5rem))] bg-neutral-900/95 backdrop-blur-2xl border-t sm:border border-white/10 rounded-t-[28px] sm:rounded-3xl flex flex-col shadow-2xl overflow-hidden animate-slide-up"
       >
         {/* iOS Grab Handle */}
         <div className="pt-3 pb-1 flex justify-center flex-shrink-0 cursor-grab active:cursor-grabbing">
@@ -163,7 +178,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         </div>
 
         {/* Modal Body */}
-        <div className="p-5 overflow-y-auto space-y-4 flex-1">
+        <div className="p-5 overflow-y-auto space-y-4 flex-1 pb-[calc(env(safe-area-inset-bottom,0px)+1.5rem)]">
           {statusMessage && (
             <div
               className={`p-3 rounded-xl border text-xs flex items-center gap-2 ${
@@ -203,15 +218,15 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
             <div className="grid grid-cols-3 gap-2 text-center pt-1">
               <div className="p-2 rounded-xl bg-neutral-900 border border-white/[0.06]">
-                <p className="text-base font-bold text-white">{totalAlbums}</p>
+                <p className="text-base font-bold text-white tabular-nums">{totalAlbumsCount}</p>
                 <p className="text-[10px] text-[#8E8E93]">Records</p>
               </div>
               <div className="p-2 rounded-xl bg-neutral-900 border border-white/[0.06]">
-                <p className="text-base font-bold text-white">{totalListens}</p>
+                <p className="text-base font-bold text-white tabular-nums">{totalListensCount}</p>
                 <p className="text-[10px] text-[#8E8E93]">Spins</p>
               </div>
               <div className="p-2 rounded-xl bg-neutral-900 border border-white/[0.06]">
-                <p className="text-base font-bold text-white">{wishlistCount}</p>
+                <p className="text-base font-bold text-white tabular-nums">{totalWishlistCount}</p>
                 <p className="text-[10px] text-[#8E8E93]">Wishlist</p>
               </div>
             </div>
@@ -306,45 +321,88 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
           </div>
 
-          {/* Reset Database */}
-          {resetHandler && (
-            <div className="pt-2">
-              {!showResetConfirm ? (
-                <button
-                  type="button"
-                  onClick={() => setShowResetConfirm(true)}
-                  className="w-full py-2.5 rounded-xl bg-neutral-950/40 hover:bg-red-950/30 text-neutral-500 hover:text-red-400 border border-white/[0.06] text-xs font-medium transition cursor-pointer flex items-center justify-center gap-1.5"
-                >
-                  <RotateCcw className="w-3.5 h-3.5" />
-                  <span>Reset to Sample Catalogue</span>
-                </button>
-              ) : (
-                <div className="p-3.5 bg-red-950/40 border border-red-500/20 rounded-2xl space-y-2">
-                  <p className="text-xs text-red-200 font-semibold text-center">
-                    Reset library to default curated catalogue?
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setShowResetConfirm(false)}
-                      className="flex-1 py-1.5 rounded-xl bg-neutral-800 text-xs font-semibold text-white"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={async () => {
-                        await resetHandler();
-                        setShowResetConfirm(false);
-                        onClose();
-                      }}
-                      className="flex-1 py-1.5 rounded-xl bg-red-600 hover:bg-red-500 text-xs font-semibold text-white"
-                    >
-                      Confirm Reset
-                    </button>
+          {/* Demo & Reset Controls */}
+          <div className="space-y-2 pt-1">
+            {/* Load Demo Catalogue (Optional) */}
+            {demoHandler && (
+              <div>
+                {!showDemoConfirm ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowDemoConfirm(true)}
+                    className="w-full py-2.5 rounded-xl bg-neutral-950/60 hover:bg-neutral-900 border border-white/[0.08] text-xs font-medium text-neutral-300 hover:text-white transition cursor-pointer flex items-center justify-center gap-1.5"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5 text-[#FF5A10]" />
+                    <span>Load Sample Demo Records</span>
+                  </button>
+                ) : (
+                  <div className="p-3.5 bg-neutral-950/80 border border-white/10 rounded-2xl space-y-2">
+                    <p className="text-xs text-neutral-200 font-semibold text-center">
+                      Populate library with curated sample records?
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setShowDemoConfirm(false)}
+                        className="flex-1 py-1.5 rounded-xl bg-neutral-800 text-xs font-semibold text-white cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={async () => {
+                          await demoHandler();
+                          setShowDemoConfirm(false);
+                          setStatusMessage({ type: 'success', text: 'Sample demo catalogue loaded.' });
+                        }}
+                        className="flex-1 py-1.5 rounded-xl bg-[#FF5A10] hover:bg-[#FF6F28] text-xs font-semibold text-white cursor-pointer"
+                      >
+                        Load Samples
+                      </button>
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
-          )}
+                )}
+              </div>
+            )}
+
+            {/* Reset to Clean Slate */}
+            {clearHandler && (
+              <div>
+                {!showClearConfirm ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowClearConfirm(true)}
+                    className="w-full py-2.5 rounded-xl bg-neutral-950/40 hover:bg-red-950/30 text-neutral-500 hover:text-red-400 border border-white/[0.06] text-xs font-medium transition cursor-pointer flex items-center justify-center gap-1.5"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    <span>Reset / Wipe All Records (Clean Slate)</span>
+                  </button>
+                ) : (
+                  <div className="p-3.5 bg-red-950/40 border border-red-500/20 rounded-2xl space-y-2">
+                    <p className="text-xs text-red-200 font-semibold text-center">
+                      Wipe all records, spin sessions & wishlist to a clean slate?
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setShowClearConfirm(false)}
+                        className="flex-1 py-1.5 rounded-xl bg-neutral-800 text-xs font-semibold text-white cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={async () => {
+                          await clearHandler();
+                          setShowClearConfirm(false);
+                          setStatusMessage({ type: 'success', text: 'Database reset to empty state.' });
+                        }}
+                        className="flex-1 py-1.5 rounded-xl bg-red-600 hover:bg-red-500 text-xs font-semibold text-white cursor-pointer"
+                      >
+                        Wipe Everything
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

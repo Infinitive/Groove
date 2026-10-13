@@ -70,7 +70,7 @@ export const LogListenModal: React.FC<LogListenModalProps> = ({
     >
       <div
         id="log-spin-sheet"
-        className="w-full sm:max-w-md max-h-[92vh] sm:max-h-[85vh] bg-neutral-900/95 backdrop-blur-2xl border-t sm:border border-white/10 rounded-t-[28px] sm:rounded-3xl flex flex-col shadow-2xl overflow-hidden animate-slide-up"
+        className="w-full sm:max-w-md max-h-[min(90vh,calc(100dvh-5.5rem))] bg-neutral-900/95 backdrop-blur-2xl border-t sm:border border-white/10 rounded-t-[28px] sm:rounded-3xl flex flex-col shadow-2xl overflow-hidden animate-slide-up"
       >
         {/* iOS Grab Handle */}
         <div className="pt-3 pb-1 flex justify-center flex-shrink-0 cursor-grab active:cursor-grabbing">
@@ -90,7 +90,7 @@ export const LogListenModal: React.FC<LogListenModalProps> = ({
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-5 overflow-y-auto space-y-4 flex-1">
+        <form onSubmit={handleSubmit} className="p-5 overflow-y-auto space-y-4 flex-1 pb-[calc(env(safe-area-inset-bottom,0px)+1.5rem)]">
           {/* Album Overview */}
           <div className="flex items-center gap-3 p-3 rounded-2xl bg-neutral-950/60 border border-white/[0.08]">
             <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0">

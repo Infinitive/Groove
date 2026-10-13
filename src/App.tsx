@@ -38,6 +38,8 @@ export default function App() {
     moveWishlistToLibrary,
     exportJSON,
     importJSON,
+    clearDatabase,
+    loadDemoCatalogue,
     resetToCatalogue,
     exportCSV,
   } = useVinylData();
@@ -98,19 +100,20 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[#000000] text-white flex flex-col selection:bg-[#FF5A10]/25 selection:text-[#FF7A00]">
+    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-[#000000] text-white flex flex-col selection:bg-[#FF5A10]/25 selection:text-[#FF7A00]">
       {/* Offline Status Pill */}
       <OfflineIndicator />
 
       {/* Main View Container with Zero Top Header & Safe-Area Top Padding (brought down below status bar shadow) */}
-      <main className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 pt-[calc(env(safe-area-inset-top,0px)+2rem)] sm:pt-[calc(env(safe-area-inset-top,0px)+2.5rem)] pb-28 sm:pb-32">
-        <div key={currentTab} className="tab-view-wrapper">
+      <main className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 pt-[calc(env(safe-area-inset-top,0px)+2rem)] sm:pt-[calc(env(safe-area-inset-top,0px)+2.5rem)] pb-28 sm:pb-32 overflow-x-hidden">
+        <div key={currentTab} className="tab-view-wrapper w-full max-w-full overflow-x-hidden">
           {currentTab === 'library' && (
             <LibraryView
               albums={albums}
               albumStats={albumStats}
               onSelectAlbum={(album) => setSelectedAlbumForDetail(album)}
               onOpenAdd={() => setIsAddRecordOpen(true)}
+              onLoadDemoCatalogue={loadDemoCatalogue}
               onLogListen={(album) => setAlbumToLogListen(album)}
               onNavigateTab={(tab) => handleTabChange(tab)}
             />
@@ -241,12 +244,17 @@ export default function App() {
       {isSettingsOpen && (
         <SettingsModal
           totalAlbums={albums.length}
+          albumCount={albums.length}
           totalListens={listenLogs.length}
+          listenCount={listenLogs.length}
+          wishlistCount={wishlist.length}
           onClose={() => setIsSettingsOpen(false)}
           onExportJSON={exportJSON}
           onImportJSON={importJSON}
           onExportCSV={exportCSV}
-          onResetToDefault={resetToCatalogue}
+          onClearDatabase={clearDatabase}
+          onLoadDemoCatalogue={loadDemoCatalogue}
+          onResetToDefault={clearDatabase}
         />
       )}
     </div>

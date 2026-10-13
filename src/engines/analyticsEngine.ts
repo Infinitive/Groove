@@ -247,8 +247,30 @@ export function filterLogsByTimeRange(
 
 // ==========================================
 // 1. COLLECTION INTELLIGENCE CALCULATIONS
+// Helper to aggregate album and spin session ratings
+function getEffectiveAlbumRating(
+  album: Album,
+  albumRatingsMap: Map<string, number[]>
+): number | null {
+  if (album.personalRating !== undefined && album.personalRating !== null && album.personalRating > 0) {
+    return album.personalRating;
+  }
+  const spinRatings = albumRatingsMap.get(album.id);
+  if (spinRatings && spinRatings.length > 0) {
+    const avg = spinRatings.reduce((sum, r) => sum + r, 0) / spinRatings.length;
+    // Round to nearest 0.5 star
+    return Math.round(avg * 2) / 2;
+  }
+  return null;
+}
+
 // ==========================================
-export function computeCollectionOverview(albums: Album[]): CollectionOverviewStats {
+// 1. COLLECTION OVERVIEW
+// ==========================================
+export function computeCollectionOverview(
+  albums: Album[],
+  logs: ListenLog[] = []
+): CollectionOverviewStats {
   const totalRecords = albums.length;
   if (totalRecords === 0) {
     return {
@@ -266,6 +288,16 @@ export function computeCollectionOverview(albums: Album[]): CollectionOverviewSt
       recordsWithPurchaseInfoCount: 0,
       totalEstimatedSpend: null,
     };
+  }
+
+  // Pre-build map of spin ratings per record
+  const albumRatingsMap = new Map<string, number[]>();
+  for (const log of logs) {
+    if (log.rating !== undefined && log.rating !== null && log.rating > 0) {
+      const existing = albumRatingsMap.get(log.recordId) || [];
+      existing.push(log.rating);
+      albumRatingsMap.set(log.recordId, existing);
+    }
   }
 
   const artistsSet = new Set<string>();
@@ -307,9 +339,11 @@ export function computeCollectionOverview(albums: Album[]): CollectionOverviewSt
       decadesSet.add(dec);
     }
 
-    if (album.personalRating !== undefined && album.personalRating > 0) {
+    // Effective rating from either album personalRating or spin sessions
+    const effectiveRating = getEffectiveAlbumRating(album, albumRatingsMap);
+    if (effectiveRating !== null && effectiveRating > 0) {
       ratedCount++;
-      ratingSum += album.personalRating;
+      ratingSum += effectiveRating;
     }
 
     if (album.edition && album.edition.trim()) {
@@ -361,7 +395,10 @@ export function computeCollectionOverview(albums: Album[]): CollectionOverviewSt
  * - Percentage represents "% of total collection containing this attribute" = (count / totalRecords) * 100.
  * - This prevents artificial under-counting of multifaceted works while preserving aggregate collection truth.
  */
-export function computeCollectionDemographics(albums: Album[]): CollectionDemographicsStats {
+export function computeCollectionDemographics(
+  albums: Album[],
+  logs: ListenLog[] = []
+): CollectionDemographicsStats {
   const total = albums.length;
   if (total === 0) {
     return {
@@ -373,6 +410,16 @@ export function computeCollectionDemographics(albums: Album[]): CollectionDemogr
       ratingDistribution: [],
       highestRatedAlbums: [],
     };
+  }
+
+  // Pre-build map of spin ratings per record
+  const albumRatingsMap = new Map<string, number[]>();
+  for (const log of logs) {
+    if (log.rating !== undefined && log.rating !== null && log.rating > 0) {
+      const existing = albumRatingsMap.get(log.recordId) || [];
+      existing.push(log.rating);
+      albumRatingsMap.set(log.recordId, existing);
+    }
   }
 
   const genreMap = new Map<string, number>();
@@ -415,9 +462,10 @@ export function computeCollectionDemographics(albums: Album[]): CollectionDemogr
       editionMap.set(ed, (editionMap.get(ed) || 0) + 1);
     }
 
-    // Ratings
-    if (a.personalRating !== undefined && a.personalRating > 0) {
-      ratingMap.set(a.personalRating, (ratingMap.get(a.personalRating) || 0) + 1);
+    // Effective Ratings
+    const effectiveRating = getEffectiveAlbumRating(a, albumRatingsMap);
+    if (effectiveRating !== null && effectiveRating > 0) {
+      ratingMap.set(effectiveRating, (ratingMap.get(effectiveRating) || 0) + 1);
     }
   }
 
@@ -478,8 +526,12 @@ export function computeCollectionDemographics(albums: Album[]): CollectionDemogr
 
   // Highest rated albums (>= 4.5 stars)
   const highestRatedAlbums = albums
-    .filter((a) => (a.personalRating || 0) >= 4.5)
-    .sort((a, b) => (b.personalRating || 0) - (a.personalRating || 0));
+    .filter((a) => (getEffectiveAlbumRating(a, albumRatingsMap) || 0) >= 4.5)
+    .sort(
+      (a, b) =>
+        (getEffectiveAlbumRating(b, albumRatingsMap) || 0) -
+        (getEffectiveAlbumRating(a, albumRatingsMap) || 0)
+    );
 
   return {
     genresDistribution,
@@ -1124,8 +1176,8 @@ export function calculateComprehensiveAnalytics(
   logs: ListenLog[],
   timeRange: AnalyticsTimeRange = 'all'
 ): ComprehensiveAnalytics {
-  const collectionOverview = computeCollectionOverview(albums);
-  const collectionDemographics = computeCollectionDemographics(albums);
+  const collectionOverview = computeCollectionOverview(albums, logs);
+  const collectionDemographics = computeCollectionDemographics(albums, logs);
   const collectionGrowth = computeCollectionGrowth(albums);
   const registryCompleteness = computeRegistryCompleteness(albums);
 

@@ -64,16 +64,13 @@ class VinylDatabase {
     return this.dbPromise;
   }
 
-  // Initialize and seed if not already initialized
+  // Initialize without preloading data
   async init(): Promise<void> {
     await this.getDB();
-    const count = await this.getRecordCount('albums');
+    const initialized = await this.getMetadata('app_initialized');
 
-    if (count === 0) {
-      // First run: seed catalogue with Phase 6.2 research baseline
-      const seedAlbums = generateSeedAlbums();
-      await this.saveAlbums(seedAlbums);
-      await this.setMetadata('seeded_at', new Date().toISOString());
+    if (!initialized) {
+      await this.setMetadata('app_initialized', true);
       await this.setMetadata('schema_version', 3);
     } else {
       // Schema version check & non-destructive migration
@@ -581,8 +578,21 @@ class VinylDatabase {
     });
   }
 
-  // RESET TO INITIAL SEED
-  async resetToSeed(): Promise<Album[]> {
+  // CLEAR ENTIRE DATABASE (Clean empty state)
+  async clearDatabase(): Promise<void> {
+    const db = await this.getDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(['albums', 'listenLogs', 'wishlist'], 'readwrite');
+      tx.objectStore('albums').clear();
+      tx.objectStore('listenLogs').clear();
+      tx.objectStore('wishlist').clear();
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+
+  // OPTIONAL: LOAD DEMO CATALOGUE
+  async loadSeedCatalogue(): Promise<Album[]> {
     const db = await this.getDB();
     const seedAlbums = generateSeedAlbums();
 
@@ -600,6 +610,10 @@ class VinylDatabase {
       tx.oncomplete = () => resolve(seedAlbums);
       tx.onerror = () => reject(tx.error);
     });
+  }
+
+  async resetToSeed(): Promise<Album[]> {
+    return this.loadSeedCatalogue();
   }
 }
 

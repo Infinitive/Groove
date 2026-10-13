@@ -174,12 +174,23 @@ export function useVinylData() {
     [reloadData]
   );
 
-  const resetToCatalogue = useCallback(async () => {
-    const freshAlbums = await dbService.resetToSeed();
-    setAlbums(freshAlbums);
+  const clearDatabase = useCallback(async () => {
+    await dbService.clearDatabase();
+    setAlbums([]);
     setListenLogs([]);
     setWishlist([]);
   }, []);
+
+  const loadDemoCatalogue = useCallback(async () => {
+    const demoAlbums = await dbService.loadSeedCatalogue();
+    setAlbums(demoAlbums);
+    setListenLogs([]);
+    setWishlist([]);
+  }, []);
+
+  const resetToCatalogue = useCallback(async () => {
+    return loadDemoCatalogue();
+  }, [loadDemoCatalogue]);
 
   // CSV Export with all specification fields and safe escaping
   const exportCSV = useCallback((type: 'library' | 'listens' | 'wishlist') => {
@@ -306,6 +317,8 @@ export function useVinylData() {
     moveWishlistToLibrary,
     exportJSON,
     importJSON,
+    clearDatabase,
+    loadDemoCatalogue,
     resetToCatalogue,
     exportCSV,
     reloadData,

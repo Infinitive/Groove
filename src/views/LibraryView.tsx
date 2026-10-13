@@ -26,6 +26,7 @@ interface LibraryViewProps {
   albumStats: Map<string, { playCount: number; lastPlayed?: string }>;
   onSelectAlbum: (album: Album) => void;
   onOpenAdd: () => void;
+  onLoadDemoCatalogue?: () => void;
   onLogListen?: (album: Album) => void;
   onNavigateTab?: (tab: 'discover' | 'analytics' | 'wishlist') => void;
 }
@@ -35,6 +36,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
   albumStats,
   onSelectAlbum,
   onOpenAdd,
+  onLoadDemoCatalogue,
   onLogListen,
   onNavigateTab,
 }) => {
@@ -382,7 +384,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
           </div>
 
           <div
-            className="flex items-center gap-3.5 overflow-x-auto pb-2 pt-0.5 no-scrollbar select-none -mx-4 px-4 sm:mx-0 sm:px-0"
+            className="flex items-center gap-3.5 overflow-x-auto pb-2 pt-0.5 no-scrollbar select-none -mx-4 px-4 sm:mx-0 sm:px-0 overscroll-x-contain"
             style={{ WebkitOverflowScrolling: 'touch', willChange: 'scroll-position' }}
           >
             {recentlyAdded.map((album) => (
@@ -424,7 +426,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
           </div>
 
           <div
-            className="flex items-center gap-3.5 overflow-x-auto pb-2 pt-0.5 no-scrollbar select-none -mx-4 px-4 sm:mx-0 sm:px-0"
+            className="flex items-center gap-3.5 overflow-x-auto pb-2 pt-0.5 no-scrollbar select-none -mx-4 px-4 sm:mx-0 sm:px-0 overscroll-x-contain"
             style={{ WebkitOverflowScrolling: 'touch', willChange: 'scroll-position' }}
           >
             {heavyRotation.map((album) => {
@@ -472,7 +474,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
           </div>
 
           <div
-            className="flex items-center gap-3.5 overflow-x-auto pb-2 pt-0.5 no-scrollbar select-none -mx-4 px-4 sm:mx-0 sm:px-0"
+            className="flex items-center gap-3.5 overflow-x-auto pb-2 pt-0.5 no-scrollbar select-none -mx-4 px-4 sm:mx-0 sm:px-0 overscroll-x-contain"
             style={{ WebkitOverflowScrolling: 'touch', willChange: 'scroll-position' }}
           >
             {awaitingRotation.map((album) => (
@@ -565,7 +567,43 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
 
         {/* Full Collection Items: List or Grid */}
         <div style={{ contain: 'layout paint' }}>
-          {filteredAlbums.length === 0 ? (
+          {albums.length === 0 ? (
+            <div className="bg-neutral-900 border border-white/[0.08] rounded-3xl py-14 px-6 text-center space-y-4 shadow-sm">
+              <div className="w-14 h-14 rounded-2xl bg-neutral-950 border border-white/10 flex items-center justify-center mx-auto shadow-inner">
+                <Disc className="w-7 h-7 text-[#FF5A10] stroke-[2]" />
+              </div>
+              <div className="space-y-1">
+                <h4 className="text-base font-bold text-white">Your Vinyl Crate is Empty</h4>
+                <p className="text-xs text-[#8E8E93] max-w-sm mx-auto leading-relaxed">
+                  Start cataloging your personal collection from scratch, or load our curated sample archive.
+                </p>
+              </div>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-2 pt-1">
+                <button
+                  onClick={() => {
+                    triggerHaptic('medium');
+                    onOpenAdd();
+                  }}
+                  className="px-4 py-2 rounded-full bg-[#FF5A10] hover:bg-[#FF6F28] active:scale-95 text-white text-xs font-semibold shadow-xs transition cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  <Plus className="w-4 h-4 stroke-[2.5]" />
+                  <span>Add First Record</span>
+                </button>
+                {onLoadDemoCatalogue && (
+                  <button
+                    onClick={() => {
+                      triggerHaptic('light');
+                      onLoadDemoCatalogue();
+                    }}
+                    className="px-4 py-2 rounded-full bg-white/[0.08] hover:bg-white/[0.14] text-neutral-200 hover:text-white text-xs font-semibold border border-white/10 transition cursor-pointer flex items-center justify-center gap-1.5"
+                  >
+                    <RotateCw className="w-3.5 h-3.5 text-[#FF5A10]" />
+                    <span>Load Sample Records</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          ) : filteredAlbums.length === 0 ? (
             <div className="bg-neutral-900 border border-white/[0.08] rounded-2xl py-16 text-center space-y-3 p-6">
               <Disc className="w-10 h-10 text-[#FF5A10] mx-auto stroke-[1.8]" />
               <h4 className="text-base font-semibold text-white">No records found</h4>

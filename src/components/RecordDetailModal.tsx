@@ -112,12 +112,12 @@ export const RecordDetailModal: React.FC<RecordDetailModalProps> = ({
           onClose();
         }
       }}
-      className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fade-in"
+      className="fixed inset-0 z-60 bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fade-in"
     >
       {/* iOS Bottom Sheet Container with Native Spring Curve */}
       <div
         id="record-detail-sheet"
-        className="w-full sm:max-w-xl max-h-[92vh] sm:max-h-[85vh] bg-[#16161A]/98 backdrop-blur-2xl border-t sm:border border-white/10 rounded-t-[28px] sm:rounded-3xl flex flex-col shadow-2xl overflow-hidden animate-slide-up"
+        className="w-full sm:max-w-xl max-h-[min(90vh,calc(100dvh-5.5rem))] bg-[#16161A]/98 backdrop-blur-2xl border-t sm:border border-white/10 rounded-t-[28px] sm:rounded-3xl flex flex-col shadow-2xl overflow-hidden animate-slide-up"
       >
         {/* iOS Top Grab Handle */}
         <div className="pt-3 pb-1 flex justify-center flex-shrink-0 cursor-grab active:cursor-grabbing">
@@ -142,7 +142,7 @@ export const RecordDetailModal: React.FC<RecordDetailModalProps> = ({
         </div>
 
         {/* Scrollable Content */}
-        <div className="p-5 overflow-y-auto space-y-5">
+        <div className="p-5 overflow-y-auto space-y-5 pb-[calc(env(safe-area-inset-bottom,0px)+2rem)]">
           {/* Header Artwork & Info */}
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 text-center sm:text-left">
             <div className="w-32 h-32 sm:w-36 sm:h-36 flex-shrink-0 rounded-2xl overflow-hidden shadow-lg border border-white/10">

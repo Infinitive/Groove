@@ -176,7 +176,7 @@ export const WishlistView: React.FC<WishlistViewProps> = ({
       </div>
 
       {/* 3. Inset Grouped Wishlist Container */}
-      <div className="bg-neutral-900 border border-white/[0.08] rounded-2xl overflow-hidden divide-y divide-white/[0.06] shadow-sm">
+      <div className="bg-neutral-900 border border-white/[0.08] rounded-2xl overflow-hidden divide-y divide-white/[0.06] shadow-sm mb-12">
         {filteredItems.length === 0 ? (
           <div className="p-12 text-center space-y-2 text-[#8E8E93]">
             <Bookmark className="w-8 h-8 text-[#FF5A10] mx-auto opacity-75" />
@@ -268,12 +268,12 @@ export const WishlistView: React.FC<WishlistViewProps> = ({
           }}
           className="fixed inset-0 z-60 bg-black/65 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fade-in"
         >
-          <div className="w-full sm:max-w-md bg-neutral-900/98 backdrop-blur-2xl border-t sm:border border-white/10 rounded-t-[28px] sm:rounded-3xl flex flex-col shadow-2xl overflow-hidden animate-slide-up">
+          <div className="w-full sm:max-w-md max-h-[min(90vh,calc(100dvh-5.5rem))] bg-neutral-900/98 backdrop-blur-2xl border-t sm:border border-white/10 rounded-t-[28px] sm:rounded-3xl flex flex-col shadow-2xl overflow-hidden animate-slide-up">
             <div className="pt-3 pb-1 flex justify-center flex-shrink-0">
               <div className="w-10 h-1.5 rounded-full bg-white/25" />
             </div>
 
-            <div className="px-5 py-2.5 flex items-center justify-between border-b border-white/[0.06]">
+            <div className="px-5 py-2.5 flex items-center justify-between border-b border-white/[0.06] flex-shrink-0">
               <h3 className="text-base font-bold text-white tracking-tight">
                 {editingItem ? 'Edit Wanted Record' : 'Add to Wishlist'}
               </h3>
@@ -285,7 +285,7 @@ export const WishlistView: React.FC<WishlistViewProps> = ({
               </button>
             </div>
 
-            <form onSubmit={handleSaveItem} className="p-5 space-y-3.5">
+            <form onSubmit={handleSaveItem} className="p-5 overflow-y-auto space-y-3.5 flex-1 pb-[calc(env(safe-area-inset-bottom,0px)+1.5rem)]">
               {formError && (
                 <div className="p-2.5 rounded-xl bg-red-950/40 border border-red-500/20 text-red-200 text-xs">
                   {formError}

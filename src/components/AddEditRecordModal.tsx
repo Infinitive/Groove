@@ -130,11 +130,11 @@ export const AddEditRecordModal: React.FC<AddEditRecordModalProps> = ({
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
-      className="fixed inset-0 z-50 bg-black/65 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fade-in"
+      className="fixed inset-0 z-60 bg-black/65 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fade-in"
     >
       <div
         id="add-edit-record-sheet"
-        className="w-full sm:max-w-xl max-h-[92vh] sm:max-h-[85vh] bg-neutral-900/95 backdrop-blur-2xl border-t sm:border border-white/10 rounded-t-[28px] sm:rounded-3xl flex flex-col shadow-2xl overflow-hidden animate-slide-up"
+        className="w-full sm:max-w-xl max-h-[min(90vh,calc(100dvh-5.5rem))] bg-neutral-900/95 backdrop-blur-2xl border-t sm:border border-white/10 rounded-t-[28px] sm:rounded-3xl flex flex-col shadow-2xl overflow-hidden animate-slide-up"
       >
         {/* iOS Grab Handle */}
         <div className="pt-3 pb-1 flex justify-center flex-shrink-0 cursor-grab active:cursor-grabbing">
@@ -156,7 +156,7 @@ export const AddEditRecordModal: React.FC<AddEditRecordModalProps> = ({
         </div>
 
         {/* Form Content */}
-        <form onSubmit={handleSubmit} className="p-5 overflow-y-auto space-y-4 flex-1">
+        <form onSubmit={handleSubmit} className="p-5 overflow-y-auto space-y-4 flex-1 pb-[calc(env(safe-area-inset-bottom,0px)+1.5rem)]">
           {formError && (
             <div className="p-3 rounded-xl bg-red-950/40 border border-red-500/20 text-red-200 text-xs flex items-center gap-2">
               <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
